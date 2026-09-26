@@ -40,6 +40,10 @@ next-env.d.ts
 cookies.txt
 *.cookies
 
+# Deployment scripts (may contain environment-specific configuration)
+deploy-*.ps1
+deploy-*.sh
+
 # Prisma
 prisma/migrations/
 
