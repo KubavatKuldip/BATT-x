@@ -36,6 +36,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Browser session artifacts
+cookies.txt
+*.cookies
+
 # Prisma
 prisma/migrations/
 
