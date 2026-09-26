@@ -8,7 +8,7 @@ const { PrismaClient } = require('@prisma/client');
 const jwt = require('jsonwebtoken');
 
 const prisma = new PrismaClient();
-const port = parseInt(process.env.SOCKET_PORT || '3001', 10);
+const port = parseInt(process.env.PORT || process.env.SOCKET_PORT || '3001', 10);
 const nextUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
 const jwtSecret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
 
