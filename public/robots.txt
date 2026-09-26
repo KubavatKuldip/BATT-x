@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Disallow private API surfaces and ingest endpoints
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/

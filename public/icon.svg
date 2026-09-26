@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="battery" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+
+  <!-- Battery body -->
+  <rect x="128" y="144" width="208" height="224" rx="20" fill="none" stroke="url(#battery)" stroke-width="16"/>
+
+  <!-- Battery cap -->
+  <rect x="336" y="208" width="32" height="96" rx="8" fill="url(#battery)"/>
+
+  <!-- Battery fill (showing ~75% charge) -->
+  <rect x="156" y="200" width="152" height="112" rx="4" fill="url(#battery)"/>
+
+  <!-- Lightning bolt -->
+  <path d="M 248 200 L 208 280 L 248 280 L 224 320 L 296 240 L 256 240 L 280 200 Z" fill="url(#bg)" stroke="#ffffff" stroke-width="4" stroke-linejoin="round"/>
+
+  <!-- Bottom label -->
+  <text x="256" y="420" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="800" fill="#ffffff" letter-spacing="6">BATT-X</text>
+</svg>

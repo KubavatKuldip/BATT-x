@@ -1,0 +1,174 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CONSUMER
+  FLEET_MANAGER
+  TECHNICIAN
+  ADMIN
+}
+
+enum VehicleType {
+  TWO_WHEELER
+  THREE_WHEELER
+  FOUR_WHEELER
+}
+
+enum AlertType {
+  WARNING
+  CUTOFF
+  RESOLVED
+  RESET
+  INFO
+}
+
+enum ConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  PAIRING
+  OFFLINE
+}
+
+model User {
+  id                String         @id @default(cuid())
+  email             String         @unique
+  name              String?
+  password          String?
+  role              UserRole       @default(CONSUMER)
+  emergencyContacts Json?          // Array of {name, phone, email}
+  preferredLanguage String         @default("en")
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  devices           Device[]
+  activityLogs      ActivityLog[]
+  notifications     Notification[]
+
+  @@index([email])
+}
+
+model Device {
+  id               String           @id @default(cuid())
+  userId           String
+  serialNumber     String           @unique
+  vehicleType      VehicleType
+  nickname         String?
+  firmwareVersion  String           @default("1.0.0")
+  pairedAt         DateTime         @default(now())
+  lastSyncAt       DateTime?
+  connectionStatus ConnectionStatus @default(OFFLINE)
+
+  // Thresholds for alerts
+  thresholds       Json             // {tempMax, tempMin, gasMax, voltageMax, voltageMin, currentMax}
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sensorReadings   SensorReading[]
+  alerts           Alert[]
+  chargeSessions   ChargeSession[]
+
+  @@index([userId])
+  @@index([serialNumber])
+}
+
+model SensorReading {
+  id             String   @id @default(cuid())
+  deviceId       String
+  temperature    Float    // Celsius
+  gasLevel       Float    // ppm
+  voltage        Float    // Volts
+  current        Float    // Amps
+  batteryPercent Float    // 0-100
+  integrityHash  String   // Checksum for data integrity
+  isTampered     Boolean  @default(false)
+  locationLat    Float?
+  locationLng    Float?
+  timestamp      DateTime @default(now())
+
+  device         Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, timestamp])
+  @@index([timestamp])
+}
+
+model Alert {
+  id                    String    @id @default(cuid())
+  deviceId              String
+  type                  AlertType
+  reason                String    // "Temperature exceeded 65°C threshold"
+  sensorValuesAtTrigger Json      // Snapshot of sensor values
+  locationLat           Float?
+  locationLng           Float?
+  resolvedAt            DateTime?
+  createdAt             DateTime  @default(now())
+
+  device                Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, createdAt])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model ChargeSession {
+  id            String   @id @default(cuid())
+  deviceId      String
+  startTime     DateTime
+  endTime       DateTime?
+  startBattery  Float
+  endBattery    Float?
+  avgTemp       Float?
+  maxVoltage    Float?
+  locationLat   Float?
+  locationLng   Float?
+
+  device        Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, startTime])
+}
+
+model FirmwareUpdate {
+  id         String   @id @default(cuid())
+  version    String   @unique
+  changelog  String
+  binaryUrl  String
+  status     String   @default("available") // available, deprecated, critical
+  releasedAt DateTime @default(now())
+
+  @@index([version])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // "device_paired", "threshold_updated", "firmware_updated", etc.
+  details   Json?
+  timestamp DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, timestamp])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // "SOS", "ALERT", "INFO", "WARNING", etc.
+  title     String
+  message   String
+  data      Json?    // Additional metadata (alertId, deviceId, etc.)
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, isRead])
+}
