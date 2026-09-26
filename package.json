@@ -11,13 +11,9 @@
     "start": "next start",
     "start:prod": "concurrently \"next start\" \"node server.js\"",
     "lint": "next lint",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "prisma:migrate": "prisma migrate deploy",
-    "prisma:seed": "node prisma/seed.js"
+    "prisma:migrate": "prisma migrate deploy"
   },
   "keywords": [],
   "author": "",
