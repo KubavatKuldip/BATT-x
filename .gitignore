@@ -40,9 +40,11 @@ next-env.d.ts
 cookies.txt
 *.cookies
 
-# Deployment scripts (may contain environment-specific configuration)
+# Deployment scripts and secrets
 deploy-*.ps1
 deploy-*.sh
+.railway-secrets.local
+railway-cli-audit.md
 
 # Prisma
 prisma/migrations/
