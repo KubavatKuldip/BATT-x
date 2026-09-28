@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Newsreader } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -10,9 +10,13 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { cookies } from 'next/headers';
 
-const inter = Inter({
+// Geist fonts are loaded via CDN in globals.css
+// Newsreader serif for editorial emphasis
+const newsreader = Newsreader({
   subsets: ["latin"],
-  variable: "--font-inter",
+  style: ['normal', 'italic'],
+  weight: ['400', '500'],
+  variable: "--font-serif",
   display: "swap",
 });
 
@@ -67,7 +71,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={cn(inter.variable, "font-sans antialiased")}>
+      <body className={cn(newsreader.variable, "font-sans antialiased")}>
         <NextIntlClientProvider messages={messages}>
           <SessionProvider>
             <ThemeProvider

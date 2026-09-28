@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -95,38 +94,38 @@ const mockAlerts: Alert[] = [
 const alertTypeConfig = {
   warning: {
     icon: AlertTriangle,
-    color: "text-warning",
-    bgColor: "bg-warning/10",
-    borderColor: "border-warning/20",
-    variant: "warning" as const,
+    label: 'Warning',
+    color: 'hsl(var(--warn))',
+    bgColor: 'color-mix(in srgb, hsl(var(--warn)) 8%, hsl(var(--paper)))',
+    borderColor: 'color-mix(in srgb, hsl(var(--warn)) 25%, hsl(var(--rule)))',
   },
   cutoff: {
     icon: ShieldAlert,
-    color: "text-danger",
-    bgColor: "bg-danger/10",
-    borderColor: "border-danger/20",
-    variant: "destructive" as const,
+    label: 'Cutoff',
+    color: 'hsl(var(--danger))',
+    bgColor: 'color-mix(in srgb, hsl(var(--danger)) 8%, hsl(var(--paper)))',
+    borderColor: 'color-mix(in srgb, hsl(var(--danger)) 25%, hsl(var(--rule)))',
   },
   resolved: {
     icon: CheckCircle,
-    color: "text-success",
-    bgColor: "bg-success/10",
-    borderColor: "border-success/20",
-    variant: "success" as const,
+    label: 'Resolved',
+    color: 'hsl(var(--ok))',
+    bgColor: 'color-mix(in srgb, hsl(var(--ok)) 8%, hsl(var(--paper)))',
+    borderColor: 'color-mix(in srgb, hsl(var(--ok)) 25%, hsl(var(--rule)))',
   },
   reset: {
     icon: RotateCcw,
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-    borderColor: "border-primary/20",
-    variant: "default" as const,
+    label: 'Reset',
+    color: 'hsl(var(--accent))',
+    bgColor: 'color-mix(in srgb, hsl(var(--accent)) 8%, hsl(var(--paper)))',
+    borderColor: 'color-mix(in srgb, hsl(var(--accent)) 25%, hsl(var(--rule)))',
   },
   info: {
     icon: Info,
-    color: "text-muted-foreground",
-    bgColor: "bg-muted",
-    borderColor: "border-muted",
-    variant: "secondary" as const,
+    label: 'Info',
+    color: 'hsl(var(--ink-3))',
+    bgColor: 'hsl(var(--paper))',
+    borderColor: 'hsl(var(--rule))',
   },
 };
 
@@ -173,26 +172,35 @@ export default function AlertsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-heading-1">{t('title')}</h1>
-          <p className="text-body text-muted-foreground mt-1">
-            {t('description')}
-          </p>
+    <div className="min-h-screen" style={{ background: 'hsl(var(--bg))' }}>
+      <div className="max-w-[1240px] mx-auto px-8 py-12 space-y-16">
+        {/* Editorial Header */}
+        <div className="space-y-10">
+          <div className="eyebrow">03 — Alert history</div>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-10 items-end pb-7 border-b border-rule">
+            <div className="space-y-3.5">
+              <div className="font-mono text-[11px] text-ink-4 tracking-wide uppercase">
+                {filteredAlerts.length} EVENTS · LAST 7 DAYS
+              </div>
+            </div>
+            <div>
+              <h2 className="h-section">
+                Every alert, <em className="font-serif italic font-normal" style={{ color: 'hsl(var(--accent))' }}>timestamped.</em>
+              </h2>
+            </div>
+          </div>
         </div>
 
         {/* Search and Filter */}
-        <Card level={1} className="p-4">
+        <section>
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'hsl(var(--ink-4))' }} />
               <Input
-                placeholder={t('searchPlaceholder')}
+                placeholder="Search alerts by reason or device..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-11 h-11 font-mono text-[13px]"
               />
             </div>
 
@@ -201,24 +209,30 @@ export default function AlertsPage() {
                 const config = alertTypeConfig[type];
                 const isSelected = selectedTypes.includes(type);
                 return (
-                  <Button
+                  <button
                     key={type}
-                    variant={isSelected ? "default" : "outline"}
-                    size="sm"
                     onClick={() => toggleTypeFilter(type)}
-                    className="capitalize"
+                    className={cn(
+                      "px-4 py-2 rounded-lg border font-mono text-[11px] tracking-wide uppercase transition-all",
+                      isSelected
+                        ? "border-accent"
+                        : "border-rule hover:border-ink-4"
+                    )}
+                    style={{
+                      background: isSelected ? 'color-mix(in srgb, hsl(var(--accent)) 8%, hsl(var(--paper)))' : 'hsl(var(--paper))',
+                      color: isSelected ? 'hsl(var(--accent))' : 'hsl(var(--ink-3))',
+                    }}
                   >
-                    <Filter className="w-3 h-3" />
-                    {t(type)}
-                  </Button>
+                    {config.label}
+                  </button>
                 );
               })}
             </div>
           </div>
-        </Card>
+        </section>
 
         {/* Alerts List */}
-        <div className="space-y-3">
+        <section className="space-y-4">
           <AnimatePresence mode="popLayout">
             {filteredAlerts.map((alert) => {
               const config = alertTypeConfig[alert.type];
@@ -230,52 +244,60 @@ export default function AlertsPage() {
                   key={alert.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Card
-                    level={2}
-                    className={cn(
-                      "overflow-hidden transition-all hover:shadow-clay-lg cursor-pointer",
-                      config.bgColor
-                    )}
+                  <div
+                    className="paper-surface-hover rounded-lg border cursor-pointer transition-all"
                     onClick={() => toggleAlertExpansion(alert.id)}
+                    style={{
+                      background: config.bgColor,
+                      borderColor: config.borderColor,
+                    }}
                   >
-                    <div className="p-4">
-                      <div className="flex items-start gap-4">
-                        <div className={cn("p-2.5 rounded-lg shrink-0", config.bgColor)}>
-                          <Icon className={cn("w-5 h-5", config.color)} />
+                    <div className="p-6">
+                      <div className="flex items-start gap-5">
+                        <div className="p-3 rounded-lg border shrink-0" style={{
+                          borderColor: config.borderColor,
+                          background: 'hsl(var(--bg))'
+                        }}>
+                          <Icon className="w-5 h-5" style={{ color: config.color }} />
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-3 mb-2">
+                          <div className="flex items-start justify-between gap-3 mb-3">
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 flex-wrap mb-1">
-                                <Badge variant={config.variant} className="capitalize">
-                                  {alert.type}
-                                </Badge>
-                                <span className="text-caption text-muted-foreground">
+                              <div className="flex items-center gap-3 flex-wrap mb-2">
+                                <span className="font-mono text-[10px] px-2 py-0.5 rounded uppercase tracking-wide" style={{
+                                  background: config.bgColor,
+                                  color: config.color,
+                                  border: `1px solid ${config.borderColor}`,
+                                }}>
+                                  {config.label}
+                                </span>
+                                <span className="font-mono text-[11px]" style={{ color: 'hsl(var(--ink-3))' }}>
                                   {alert.deviceName}
                                 </span>
                               </div>
-                              <p className="text-body font-medium">{alert.reason}</p>
+                              <p className="text-[15px] font-medium leading-snug">{alert.reason}</p>
                             </div>
 
                             <ChevronDown
                               className={cn(
-                                "w-5 h-5 text-muted-foreground shrink-0 transition-transform",
+                                "w-5 h-5 shrink-0 transition-transform",
                                 isExpanded && "rotate-180"
                               )}
+                              style={{ color: 'hsl(var(--ink-4))' }}
                             />
                           </div>
 
-                          <div className="flex items-center gap-4 text-caption text-muted-foreground">
-                            <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-5 font-mono text-[11px]" style={{ color: 'hsl(var(--ink-3))' }}>
+                            <div className="flex items-center gap-1.5">
                               <Clock className="w-3 h-3" />
                               {formatTimestamp(alert.timestamp)}
                             </div>
                             {alert.location && (
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1.5">
                                 <MapPin className="w-3 h-3" />
                                 {alert.location}
                               </div>
@@ -293,47 +315,50 @@ export default function AlertsPage() {
                             transition={{ duration: 0.2 }}
                             className="overflow-hidden"
                           >
-                            <div className="mt-4 pt-4 border-t border-border">
-                              <h4 className="text-body-sm font-semibold mb-3">
-                                {t('sensorValues')}
+                            <div className="mt-6 pt-6 border-t" style={{ borderColor: config.borderColor }}>
+                              <h4 className="smallcaps mb-4" style={{ color: 'hsl(var(--ink-2))' }}>
+                                Sensor values at event
                               </h4>
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                <div className="clay-inset p-3 rounded-md">
-                                  <p className="text-caption text-muted-foreground mb-1">{tDash('temperature')}</p>
-                                  <p className="text-body font-semibold tabular-nums">
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                                <div className="p-4 rounded-lg border border-rule" style={{ background: 'hsl(var(--bg))' }}>
+                                  <p className="smallcaps mb-2" style={{ color: 'hsl(var(--ink-3))' }}>Temperature</p>
+                                  <p className="font-mono text-[18px] font-light tabular-nums">
                                     {alert.sensorValues.temperature.toFixed(1)}°C
                                   </p>
                                 </div>
-                                <div className="clay-inset p-3 rounded-md">
-                                  <p className="text-caption text-muted-foreground mb-1">{tDash('voltage')}</p>
-                                  <p className="text-body font-semibold tabular-nums">
+                                <div className="p-4 rounded-lg border border-rule" style={{ background: 'hsl(var(--bg))' }}>
+                                  <p className="smallcaps mb-2" style={{ color: 'hsl(var(--ink-3))' }}>Voltage</p>
+                                  <p className="font-mono text-[18px] font-light tabular-nums">
                                     {alert.sensorValues.voltage.toFixed(2)}V
                                   </p>
                                 </div>
-                                <div className="clay-inset p-3 rounded-md">
-                                  <p className="text-caption text-muted-foreground mb-1">{tDash('current')}</p>
-                                  <p className="text-body font-semibold tabular-nums">
+                                <div className="p-4 rounded-lg border border-rule" style={{ background: 'hsl(var(--bg))' }}>
+                                  <p className="smallcaps mb-2" style={{ color: 'hsl(var(--ink-3))' }}>Current</p>
+                                  <p className="font-mono text-[18px] font-light tabular-nums">
                                     {alert.sensorValues.current.toFixed(2)}A
                                   </p>
                                 </div>
-                                <div className="clay-inset p-3 rounded-md">
-                                  <p className="text-caption text-muted-foreground mb-1">{tDash('gasLevel')}</p>
-                                  <p className="text-body font-semibold tabular-nums">
+                                <div className="p-4 rounded-lg border border-rule" style={{ background: 'hsl(var(--bg))' }}>
+                                  <p className="smallcaps mb-2" style={{ color: 'hsl(var(--ink-3))' }}>Gas Level</p>
+                                  <p className="font-mono text-[18px] font-light tabular-nums">
                                     {alert.sensorValues.gasLevel.toFixed(0)} ppm
                                   </p>
                                 </div>
-                                <div className="clay-inset p-3 rounded-md">
-                                  <p className="text-caption text-muted-foreground mb-1">{tDash('battery')}</p>
-                                  <p className="text-body font-semibold tabular-nums">
+                                <div className="p-4 rounded-lg border border-rule" style={{ background: 'hsl(var(--bg))' }}>
+                                  <p className="smallcaps mb-2" style={{ color: 'hsl(var(--ink-3))' }}>Battery</p>
+                                  <p className="font-mono text-[18px] font-light tabular-nums">
                                     {alert.sensorValues.batteryPercent.toFixed(0)}%
                                   </p>
                                 </div>
                               </div>
 
                               {alert.resolvedAt && (
-                                <div className="mt-3 p-3 rounded-md bg-success/10 border border-success/20">
-                                  <p className="text-body-sm text-success">
-                                    ✓ {t('resolved')} {formatTimestamp(alert.resolvedAt)}
+                                <div className="mt-4 p-4 rounded-lg border" style={{
+                                  background: 'color-mix(in srgb, hsl(var(--ok)) 5%, hsl(var(--bg)))',
+                                  borderColor: 'color-mix(in srgb, hsl(var(--ok)) 25%, hsl(var(--rule)))',
+                                }}>
+                                  <p className="text-[13px] font-medium" style={{ color: 'hsl(var(--ok))' }}>
+                                    ✓ Resolved {formatTimestamp(alert.resolvedAt)}
                                   </p>
                                 </div>
                               )}
@@ -342,30 +367,41 @@ export default function AlertsPage() {
                         )}
                       </AnimatePresence>
                     </div>
-                  </Card>
+                  </div>
                 </motion.div>
               );
             })}
           </AnimatePresence>
 
           {filteredAlerts.length === 0 && (
-            <Card level={1} className="p-12 text-center">
-              <div className="flex flex-col items-center gap-3">
-                <div className="p-4 rounded-full bg-muted">
-                  <CheckCircle className="w-8 h-8 text-muted-foreground" />
+            <div className="paper-surface-hover rounded-lg border border-rule p-16 text-center">
+              <div className="flex flex-col items-center gap-4">
+                <div className="p-5 rounded-full border border-rule" style={{ background: 'hsl(var(--bg))' }}>
+                  <CheckCircle className="w-8 h-8" style={{ color: 'hsl(var(--ink-4))' }} />
                 </div>
                 <div>
-                  <p className="text-body font-medium">{t('noAlertsFound')}</p>
-                  <p className="text-body-sm text-muted-foreground">
+                  <p className="text-[16px] font-medium mb-1">No alerts found</p>
+                  <p className="text-[13px]" style={{ color: 'hsl(var(--ink-3))' }}>
                     {searchQuery || selectedTypes.length > 0
-                      ? t('tryAdjusting')
-                      : t('allNormal')}
+                      ? 'Try adjusting your search or filters'
+                      : 'All systems operating normally'}
                   </p>
                 </div>
               </div>
-            </Card>
+            </div>
           )}
-        </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="pt-11 border-t border-rule">
+          <div className="flex items-center justify-between flex-wrap gap-8">
+            <div className="flex gap-5 flex-wrap font-mono text-[10.5px] tracking-wide" style={{ color: 'hsl(var(--ink-4))' }}>
+              <span>BATT-x · Alert History</span>
+              <span className="opacity-40">·</span>
+              <span>All events signed with HMAC-SHA256</span>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );

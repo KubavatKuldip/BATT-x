@@ -18,7 +18,7 @@ export const authOptions = {
           return null;
         }
 
-        const email = credentials.email.toLowerCase().trim();
+        const email = (credentials.email as string).toLowerCase().trim();
 
         // Demo credentials shortcut — local dev only. Refuses to run in production
         // and refuses to run if NEXTAUTH_SECRET is the placeholder, so a misconfigured
@@ -54,7 +54,7 @@ export const authOptions = {
           return null;
         }
 
-        const isValid = await compare(credentials.password, user.password);
+        const isValid = await compare(credentials.password as string, user.password);
 
         if (!isValid) {
           return null;

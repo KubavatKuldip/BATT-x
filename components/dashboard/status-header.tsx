@@ -1,13 +1,9 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { CircleCheck, AlertTriangle, ShieldAlert, Wifi, WifiOff } from "lucide-react";
-import { motion } from "framer-motion";
+import { Shield, AlertTriangle, XCircle, CheckCircle } from "lucide-react";
 import type { DeviceStatus, ConnectionStatus } from "@/lib/types";
 import { useState, useEffect } from "react";
-import { formatTimeOnly } from "@/lib/utils/date-format";
 
 interface StatusHeaderProps {
   deviceStatus: DeviceStatus;
@@ -22,126 +18,128 @@ export function StatusHeader({
   gracePeriodSeconds,
   lastSyncAt
 }: StatusHeaderProps) {
-  const [isClient, setIsClient] = useState(false);
+  const [countdown, setCountdown] = useState(gracePeriodSeconds || 90);
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    if (gracePeriodSeconds !== null && gracePeriodSeconds > 0) {
+      setCountdown(gracePeriodSeconds);
+      const timer = setInterval(() => {
+        setCountdown(prev => Math.max(0, prev - 1));
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [gracePeriodSeconds]);
 
   const getStatusConfig = () => {
     switch (deviceStatus) {
       case 'normal':
         return {
-          icon: CircleCheck,
-          text: 'Normal',
-          description: 'All systems operating normally',
-          variant: 'success' as const,
-          bgColor: 'bg-success/10',
-          textColor: 'text-success',
+          icon: Shield,
+          eyebrow: '01 — System state',
+          headlineText: 'All systems ',
+          headlineEmphasis: 'nominal.',
+          lede: 'Unit 0042 is monitoring every cell. Temperature, gas, current, and voltage are all within their safe envelopes. No action is required.',
+          mode: '',
         };
       case 'warning':
         return {
           icon: AlertTriangle,
-          text: 'Warning',
-          description: gracePeriodSeconds
-            ? `Grace period: ${gracePeriodSeconds}s remaining`
-            : 'Threshold exceeded - monitoring',
-          variant: 'warning' as const,
-          bgColor: 'bg-warning/10',
-          textColor: 'text-warning',
+          eyebrow: '01 — System state · elevated',
+          headlineText: 'Temperature is ',
+          headlineEmphasis: 'climbing.',
+          lede: 'Cell temperature has crossed the warning threshold. This is common on sustained climbs and in high ambient heat. The unit is watching closely and will escalate if the trend continues.',
+          mode: 'warn',
         };
       case 'cutoff':
         return {
-          icon: ShieldAlert,
-          text: 'Cutoff Active',
-          description: 'Safety cutoff triggered - charging stopped',
-          variant: 'destructive' as const,
-          bgColor: 'bg-danger/10',
-          textColor: 'text-danger',
+          icon: AlertTriangle,
+          eyebrow: '01 — System state · grace period',
+          headlineText: 'Pull over ',
+          headlineEmphasis: 'safely.',
+          lede: 'Temperature and gas readings both indicate an early thermal event. The unit will isolate the pack when the countdown reaches zero. Signal, move to the shoulder, and switch off.',
+          mode: 'grace',
         };
-    }
-  };
-
-  const getConnectionConfig = () => {
-    switch (connectionStatus) {
-      case 'connected':
-        return { icon: Wifi, text: 'Connected', color: 'text-success' };
-      case 'disconnected':
-        return { icon: WifiOff, text: 'Disconnected', color: 'text-muted-foreground' };
-      case 'pairing':
-        return { icon: Wifi, text: 'Pairing...', color: 'text-warning' };
-      case 'offline':
-        return { icon: WifiOff, text: 'Offline', color: 'text-muted-foreground' };
+      case 'cutoff':
+        return {
+          icon: XCircle,
+          eyebrow: '01 — System state · isolated',
+          headlineText: 'Pack ',
+          headlineEmphasis: 'isolated.',
+          lede: 'The unit has disconnected the battery to prevent propagation. The vehicle will not start until the pack cools and the fault is cleared. Your records are sealed and complete.',
+          mode: 'cut',
+        };
+      case 'normal':
+      default:
+        return {
+          icon: Shield,
+          eyebrow: '01 — System state',
+          headlineText: 'All systems ',
+          headlineEmphasis: 'nominal.',
+          lede: 'Unit 0042 is monitoring every cell.',
+          mode: '',
+        };
     }
   };
 
   const statusConfig = getStatusConfig();
-  const connectionConfig = getConnectionConfig();
   const StatusIcon = statusConfig.icon;
-  const ConnectionIcon = connectionConfig.icon;
 
   return (
-    <Card
-      level={3}
-      className="p-6 mb-6"
-      // aria-live=polite so a screen reader announces when the device
-      // transitions to warning / cutoff, but only when the user is idle —
-      // polite (not assertive) avoids interrupting the user mid-task.
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
-      aria-label={`Device status: ${statusConfig.text}. ${statusConfig.description}. ${connectionConfig.text}.`}
-    >
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div className="flex items-start gap-4">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200 }}
-            className={cn("p-4 rounded-xl", statusConfig.bgColor)}
-            aria-hidden="true"
-          >
-            <StatusIcon className={cn("w-8 h-8", statusConfig.textColor)} />
-          </motion.div>
+    <section className="border-b pb-16 mb-16" style={{ borderColor: 'hsl(var(--rule))' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_0.82fr] gap-10 lg:gap-20 items-center">
+        <div>
+          <div className="eyebrow mb-7">{statusConfig.eyebrow}</div>
+          <h1 className="h-display mb-7" style={{ color: 'hsl(var(--ink))' }}>
+            {statusConfig.headlineText}
+            <em className="font-serif italic font-normal" style={{ color: 'hsl(var(--accent))' }}>
+              {statusConfig.headlineEmphasis}
+            </em>
+          </h1>
+          <p className="lede mb-8">{statusConfig.lede}</p>
 
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h2 className={cn("text-heading-3", statusConfig.textColor)}>
-                {statusConfig.text}
-              </h2>
-              <Badge variant={statusConfig.variant}>
-                <span className="sr-only">Status: </span>
-                {deviceStatus.toUpperCase()}
-              </Badge>
+          <div className="flex gap-9 flex-wrap pt-7 border-t" style={{ borderColor: 'hsl(var(--rule))' }}>
+            <div>
+              <div className="font-mono text-xl font-normal tracking-tight tabular-nums" style={{ color: 'hsl(var(--ink))' }}>
+                04:12:08
+              </div>
+              <div className="smallcaps mt-1.5">Uptime</div>
             </div>
-            <p className="text-body-sm text-muted-foreground">
-              {statusConfig.description}
-            </p>
+            <div>
+              <div className="font-mono text-xl font-normal tracking-tight tabular-nums" style={{ color: 'hsl(var(--ink))' }}>
+                {lastSyncAt ? lastSyncAt.toTimeString().slice(0, 8) : '--:--:--'}
+              </div>
+              <div className="smallcaps mt-1.5">Last sync</div>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-right space-y-1">
-            <div className="flex items-center gap-2 justify-end">
-              <ConnectionIcon
-                className={cn("w-4 h-4", connectionConfig.color)}
-                aria-hidden="true"
-              />
-              <span className={cn("text-body-sm font-medium", connectionConfig.color)}>
-                {connectionConfig.text}
-              </span>
-            </div>
-            {lastSyncAt && (
-              <p className="text-caption text-muted-foreground">
-                Last synced:{" "}
-                <time dateTime={new Date(lastSyncAt).toISOString()}>
-                  {isClient ? new Date(lastSyncAt).toLocaleTimeString() : formatTimeOnly(lastSyncAt)}
-                </time>
-              </p>
-            )}
+        <div className={cn("flex items-center justify-center", statusConfig.mode)}>
+          <div className={cn(
+            "relative grid place-items-center rounded-full border transition-all duration-500",
+            "w-[clamp(180px,24vw,280px)] h-[clamp(180px,24vw,280px)]"
+          )} style={{
+            background: statusConfig.mode === 'warn'
+              ? 'radial-gradient(circle at 50% 35%, hsl(var(--warn-soft)), transparent 68%)'
+              : statusConfig.mode === 'cut'
+              ? 'radial-gradient(circle at 50% 35%, hsl(var(--danger-soft)), transparent 68%)'
+              : 'radial-gradient(circle at 50% 35%, hsl(var(--accent-soft)), transparent 68%)',
+            borderColor: 'hsl(var(--rule))',
+          }}>
+            <StatusIcon
+              className="w-[38%] h-[38%] transition-colors duration-400"
+              style={{
+                stroke: statusConfig.mode === 'warn' ? 'hsl(var(--warn))' :
+                       statusConfig.mode === 'cut' ? 'hsl(var(--danger))' :
+                       'hsl(var(--accent))',
+                fill: 'none',
+                strokeWidth: 1.3,
+                strokeLinecap: 'round',
+                strokeLinejoin: 'round',
+              }}
+            />
           </div>
         </div>
       </div>
-    </Card>
+    </section>
   );
 }

@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Users, Battery, AlertTriangle, TrendingUp, Activity, Cpu, Shield } from "lucide-react";
+import { Users, Battery, AlertTriangle, TrendingUp, Activity, Cpu, Shield, ShieldAlert, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatDateTime } from "@/lib/utils/date-format";
 import { useTranslations } from 'next-intl';
@@ -53,19 +51,23 @@ export default function AdminPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-muted-foreground">Loading analytics...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'hsl(var(--bg))' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'hsl(var(--accent))' }} />
       </div>
     );
   }
 
   if (!analytics) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'hsl(var(--bg))' }}>
         <div className="text-center">
-          <Shield className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-          <h2 className="text-heading-3 mb-2">Access Denied</h2>
-          <p className="text-muted-foreground">You don't have permission to access the admin panel.</p>
+          <div className="p-5 rounded-full border border-rule mx-auto mb-6 w-fit" style={{ background: 'hsl(var(--bg))' }}>
+            <Shield className="w-10 h-10" style={{ color: 'hsl(var(--ink-4))' }} />
+          </div>
+          <h2 className="text-[24px] font-medium tracking-tight mb-2">Access Denied</h2>
+          <p className="text-[14px]" style={{ color: 'hsl(var(--ink-3))' }}>
+            You don't have permission to access the admin panel.
+          </p>
         </div>
       </div>
     );
@@ -76,274 +78,387 @@ export default function AdminPage() {
       title: "Total Users",
       value: analytics.summary.totalUsers,
       icon: Users,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
+      color: 'hsl(var(--accent))',
     },
     {
       title: "Total Devices",
       value: analytics.summary.totalDevices,
       icon: Battery,
-      color: "text-success",
-      bgColor: "bg-success/10",
+      color: 'hsl(var(--ok))',
     },
     {
       title: "Online Devices",
       value: analytics.summary.onlineDevices,
       icon: Activity,
-      color: "text-info",
-      bgColor: "bg-info/10",
+      color: 'hsl(var(--accent))',
     },
     {
       title: "Active Alerts",
       value: analytics.summary.activeAlerts,
       icon: AlertTriangle,
-      color: "text-destructive",
-      bgColor: "bg-destructive/10",
+      color: 'hsl(var(--danger))',
     },
     {
       title: "Alerts (30d)",
       value: analytics.summary.alertsLast30Days,
       icon: TrendingUp,
-      color: "text-warning",
-      bgColor: "bg-warning/10",
+      color: 'hsl(var(--warn))',
     },
     {
       title: "Charge Sessions",
       value: analytics.summary.totalChargeSessions,
       icon: Cpu,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
+      color: 'hsl(var(--ink-2))',
     },
   ];
 
+  const statusColorMap: Record<string, string> = {
+    ONLINE: 'hsl(var(--ok))',
+    OFFLINE: 'hsl(var(--ink-4))',
+    WARNING: 'hsl(var(--warn))',
+    CUTOFF: 'hsl(var(--danger))',
+  };
+
+  const alertColorMap: Record<string, string> = {
+    CUTOFF: 'hsl(var(--danger))',
+    WARNING: 'hsl(var(--warn))',
+    RESOLVED: 'hsl(var(--ok))',
+    RESET: 'hsl(var(--accent))',
+    INFO: 'hsl(var(--ink-3))',
+  };
+
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* PAGE HEADER */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-heading-1">{t('title')}</h1>
-            <p className="text-muted-foreground mt-1">
-              {t('description')}
+    <div className="min-h-screen" style={{ background: 'hsl(var(--bg))' }}>
+      <div className="max-w-[1240px] mx-auto px-8 py-12 space-y-16">
+        {/* Editorial Header */}
+        <div className="space-y-10">
+          <div className="eyebrow">07 — Administration</div>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-10 items-end pb-7 border-b border-rule">
+            <div className="space-y-3.5">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 font-mono text-[10px] px-2.5 py-1 rounded uppercase tracking-wide" style={{
+                  background: 'color-mix(in srgb, hsl(var(--accent)) 8%, hsl(var(--paper)))',
+                  color: 'hsl(var(--accent))',
+                  border: '1px solid color-mix(in srgb, hsl(var(--accent)) 25%, hsl(var(--rule)))',
+                }}>
+                  <Shield className="w-3 h-3" aria-hidden="true" />
+                  Admin
+                </span>
+              </div>
+              <div className="font-mono text-[11px] text-ink-4 tracking-wide uppercase">
+                {analytics.summary.totalDevices} DEVICES · {analytics.summary.totalUsers} USERS
+              </div>
+            </div>
+            <div>
+              <h2 className="h-section">
+                Fleet <em className="font-serif italic font-normal" style={{ color: 'hsl(var(--accent))' }}>overview.</em>
+              </h2>
+            </div>
+          </div>
+        </div>
+
+        {/* Summary Stats */}
+        <section>
+          <div className="mb-6">
+            <h3 className="text-[22px] font-medium tracking-tight leading-tight mb-2">Platform Summary</h3>
+            <p className="text-[13px]" style={{ color: 'hsl(var(--ink-3))' }}>
+              Key metrics across the entire fleet
             </p>
           </div>
-          <Badge variant="outline" className="gap-1">
-            <Shield className="w-3 h-3" /> Admin
-          </Badge>
-        </div>
 
-        {/* SUMMARY STATS */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {statCards.map((stat, idx) => (
-            <motion.div
-              key={stat.title}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-            >
-              <Card level={2}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className={`w-8 h-8 ${stat.bgColor} rounded-lg flex items-center justify-center`}>
-                      <stat.icon className={`w-4 h-4 ${stat.color}`} />
-                    </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
+            {statCards.map((stat, idx) => (
+              <motion.div
+                key={stat.title}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+              >
+                <div className="paper-surface-hover rounded-lg border border-rule p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <stat.icon className="w-4 h-4" style={{ color: stat.color }} aria-hidden="true" />
+                    <span className="smallcaps" style={{ color: 'hsl(var(--ink-3))' }}>{stat.title}</span>
                   </div>
-                  <p className="text-2xl font-bold">{stat.value.toLocaleString()}</p>
-                  <p className="text-caption text-muted-foreground">{stat.title}</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
+                  <p className="font-mono text-[28px] font-light tabular-nums">{stat.value.toLocaleString()}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
 
-        {/* DISTRIBUTION CHARTS */}
+        {/* Distribution Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Device Status */}
-          <Card level={2}>
-            <CardHeader>
-              <CardTitle>Device Status Distribution</CardTitle>
-              <CardDescription>Current status of all devices</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          <section>
+            <div className="mb-6">
+              <h3 className="text-[22px] font-medium tracking-tight leading-tight mb-2">Device Status</h3>
+              <p className="text-[13px]" style={{ color: 'hsl(var(--ink-3))' }}>
+                Current status of all devices
+              </p>
+            </div>
+
+            <div className="paper-surface-hover rounded-lg border border-rule p-6 space-y-4">
               {analytics.deviceStatusDistribution.map((d) => {
-                const percent = (d.count / analytics.summary.totalDevices) * 100;
+                const percent = analytics.summary.totalDevices > 0
+                  ? (d.count / analytics.summary.totalDevices) * 100
+                  : 0;
+                const barColor = statusColorMap[d.status] || 'hsl(var(--ink-4))';
                 return (
                   <div key={d.status}>
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="font-medium">{d.status}</span>
-                      <span className="text-muted-foreground">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-mono text-[12px] tracking-wide uppercase">{d.status}</span>
+                      <span className="font-mono text-[12px] tabular-nums" style={{ color: 'hsl(var(--ink-3))' }}>
                         {d.count} ({percent.toFixed(1)}%)
                       </span>
                     </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'hsl(var(--bg))' }}>
                       <div
-                        className={`h-full transition-all ${
-                          d.status === "ONLINE" ? "bg-success" :
-                          d.status === "OFFLINE" ? "bg-muted-foreground" :
-                          d.status === "WARNING" ? "bg-warning" :
-                          "bg-destructive"
-                        }`}
-                        style={{ width: `${percent}%` }}
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${percent}%`, background: barColor }}
                       />
                     </div>
                   </div>
                 );
               })}
-            </CardContent>
-          </Card>
+            </div>
+          </section>
 
           {/* Vehicle Type Distribution */}
-          <Card level={2}>
-            <CardHeader>
-              <CardTitle>Vehicle Type Distribution</CardTitle>
-              <CardDescription>Devices by vehicle category</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          <section>
+            <div className="mb-6">
+              <h3 className="text-[22px] font-medium tracking-tight leading-tight mb-2">Vehicle Types</h3>
+              <p className="text-[13px]" style={{ color: 'hsl(var(--ink-3))' }}>
+                Devices by vehicle category
+              </p>
+            </div>
+
+            <div className="paper-surface-hover rounded-lg border border-rule p-6 space-y-4">
               {analytics.vehicleTypeDistribution.map((v) => {
-                const percent = (v.count / analytics.summary.totalDevices) * 100;
+                const percent = analytics.summary.totalDevices > 0
+                  ? (v.count / analytics.summary.totalDevices) * 100
+                  : 0;
                 return (
                   <div key={v.vehicleType}>
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="font-medium">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-mono text-[12px] tracking-wide uppercase">
                         {v.vehicleType === "TWO_WHEELER" ? "2-Wheeler" :
                          v.vehicleType === "THREE_WHEELER" ? "3-Wheeler" : "4-Wheeler"}
                       </span>
-                      <span className="text-muted-foreground">
+                      <span className="font-mono text-[12px] tabular-nums" style={{ color: 'hsl(var(--ink-3))' }}>
                         {v.count} ({percent.toFixed(1)}%)
                       </span>
                     </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-primary transition-all" style={{ width: `${percent}%` }} />
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'hsl(var(--bg))' }}>
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${percent}%`, background: 'hsl(var(--accent))' }}
+                      />
                     </div>
                   </div>
                 );
               })}
-            </CardContent>
-          </Card>
+            </div>
+          </section>
         </div>
 
-        {/* ALERT TYPE DISTRIBUTION */}
-        <Card level={2}>
-          <CardHeader>
-            <CardTitle>Alert Type Distribution (Last 30 Days)</CardTitle>
-            <CardDescription>Breakdown of alert types received</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {/* Alert Type Distribution */}
+        <section>
+          <div className="mb-6">
+            <h3 className="text-[22px] font-medium tracking-tight leading-tight mb-2">Alert Distribution</h3>
+            <p className="text-[13px]" style={{ color: 'hsl(var(--ink-3))' }}>
+              Breakdown of alert types over the last 30 days
+            </p>
+          </div>
+
+          <div className="paper-surface-hover rounded-lg border border-rule p-6">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-5">
               {analytics.alertTypeDistribution.map((a) => {
                 const max = Math.max(...analytics.alertTypeDistribution.map((x) => x.count));
                 const percent = max > 0 ? (a.count / max) * 100 : 0;
+                const barColor = alertColorMap[a.type] || 'hsl(var(--ink-4))';
                 return (
                   <div key={a.type} className="text-center">
-                    <div className="relative h-24 flex items-end justify-center mb-2">
+                    <div className="relative h-24 flex items-end justify-center mb-3">
                       <div
-                        className={`w-full rounded-t-lg transition-all ${
-                          a.type === "CUTOFF" ? "bg-destructive" :
-                          a.type === "WARNING" ? "bg-warning" :
-                          a.type === "RESOLVED" ? "bg-success" :
-                          a.type === "RESET" ? "bg-info" : "bg-muted-foreground"
-                        }`}
-                        style={{ height: `${percent}%`, minHeight: a.count > 0 ? "8px" : "0" }}
+                        className="w-full rounded-t-lg transition-all"
+                        style={{
+                          height: `${percent}%`,
+                          minHeight: a.count > 0 ? "8px" : "0",
+                          background: barColor,
+                          opacity: 0.8,
+                        }}
                       />
                     </div>
-                    <p className="text-lg font-bold">{a.count}</p>
-                    <p className="text-caption text-muted-foreground">{a.type}</p>
+                    <p className="font-mono text-[20px] font-light tabular-nums mb-1">{a.count}</p>
+                    <p className="font-mono text-[10px] tracking-wide uppercase" style={{ color: 'hsl(var(--ink-3))' }}>{a.type}</p>
                   </div>
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
 
-        {/* TOP USERS & RECENT ALERTS */}
+        {/* Top Users & Recent Alerts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Users */}
-          <Card level={2}>
-            <CardHeader>
-              <CardTitle>Top Users by Device Count</CardTitle>
-              <CardDescription>Users with the most paired devices</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {analytics.topUsers.slice(0, 5).map((user, idx) => (
-                  <div key={user.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                        <span className="text-caption font-bold">#{idx + 1}</span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{user.name || "N/A"}</p>
-                        <p className="text-caption text-muted-foreground">{user.email}</p>
-                      </div>
+          <section>
+            <div className="mb-6">
+              <h3 className="text-[22px] font-medium tracking-tight leading-tight mb-2">Top Users</h3>
+              <p className="text-[13px]" style={{ color: 'hsl(var(--ink-3))' }}>
+                Users with the most paired devices
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {analytics.topUsers.slice(0, 5).map((user, idx) => (
+                <div
+                  key={user.id}
+                  className="paper-surface-hover rounded-lg border border-rule p-5 flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center font-mono text-[11px] font-medium"
+                      style={{
+                        background: 'color-mix(in srgb, hsl(var(--accent)) 8%, hsl(var(--paper)))',
+                        color: 'hsl(var(--accent))',
+                      }}
+                    >
+                      #{idx + 1}
                     </div>
-                    <Badge variant="outline">{user.deviceCount} devices</Badge>
+                    <div>
+                      <p className="text-[14px] font-medium">{user.name || "N/A"}</p>
+                      <p className="font-mono text-[11px]" style={{ color: 'hsl(var(--ink-3))' }}>{user.email}</p>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  <span className="font-mono text-[11px] px-2.5 py-1 rounded" style={{
+                    background: 'hsl(var(--bg))',
+                    color: 'hsl(var(--ink-2))',
+                    border: '1px solid hsl(var(--rule))',
+                  }}>
+                    {user.deviceCount} devices
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
 
           {/* Recent Alerts */}
-          <Card level={2}>
-            <CardHeader>
-              <CardTitle>Recent Alerts</CardTitle>
-              <CardDescription>Latest safety events across the fleet</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {analytics.recentAlerts.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">No recent alerts</p>
-                ) : (
-                  analytics.recentAlerts.map((alert) => (
-                    <div key={alert.id} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-                      <div className={`w-2 h-2 rounded-full mt-2 ${
-                        alert.type === "CUTOFF" ? "bg-destructive" :
-                        alert.type === "WARNING" ? "bg-warning" :
-                        "bg-info"
-                      }`} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-medium text-sm truncate">{alert.device.nickname || alert.device.serialNumber}</p>
-                          <Badge variant={alert.resolvedAt ? "outline" : "destructive"} className="text-caption">
-                            {alert.type}
-                          </Badge>
+          <section>
+            <div className="mb-6">
+              <h3 className="text-[22px] font-medium tracking-tight leading-tight mb-2">Recent Alerts</h3>
+              <p className="text-[13px]" style={{ color: 'hsl(var(--ink-3))' }}>
+                Latest safety events across the fleet
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {analytics.recentAlerts.length === 0 ? (
+                <div className="paper-surface-hover rounded-lg border border-rule p-16 text-center">
+                  <p className="font-mono text-[12px]" style={{ color: 'hsl(var(--ink-3))' }}>
+                    No recent alerts
+                  </p>
+                </div>
+              ) : (
+                analytics.recentAlerts.map((alert) => {
+                  const dotColor = alert.type === "CUTOFF" ? 'hsl(var(--danger))'
+                    : alert.type === "WARNING" ? 'hsl(var(--warn))'
+                    : 'hsl(var(--accent))';
+                  const typeBg = alert.type === "CUTOFF"
+                    ? 'color-mix(in srgb, hsl(var(--danger)) 8%, hsl(var(--paper)))'
+                    : alert.type === "WARNING"
+                    ? 'color-mix(in srgb, hsl(var(--warn)) 8%, hsl(var(--paper)))'
+                    : 'hsl(var(--bg))';
+                  const typeColor = alert.type === "CUTOFF"
+                    ? 'hsl(var(--danger))'
+                    : alert.type === "WARNING"
+                    ? 'hsl(var(--warn))'
+                    : 'hsl(var(--ink-3))';
+                  const typeBorder = alert.type === "CUTOFF"
+                    ? '1px solid color-mix(in srgb, hsl(var(--danger)) 25%, hsl(var(--rule)))'
+                    : alert.type === "WARNING"
+                    ? '1px solid color-mix(in srgb, hsl(var(--warn)) 25%, hsl(var(--rule)))'
+                    : '1px solid hsl(var(--rule))';
+
+                  return (
+                    <div key={alert.id} className="paper-surface-hover rounded-lg border border-rule p-5">
+                      <div className="flex items-start gap-3">
+                        <div
+                          className="w-2 h-2 rounded-full mt-2 shrink-0"
+                          style={{ background: dotColor }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <p className="text-[14px] font-medium truncate">
+                              {alert.device.nickname || alert.device.serialNumber}
+                            </p>
+                            <span
+                              className="font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wide shrink-0"
+                              style={{
+                                background: typeBg,
+                                color: typeColor,
+                                border: typeBorder,
+                              }}
+                            >
+                              {alert.type}
+                            </span>
+                          </div>
+                          <p className="text-[13px] mb-1.5 line-clamp-1" style={{ color: 'hsl(var(--ink-2))' }}>
+                            {alert.reason}
+                          </p>
+                          <p className="font-mono text-[10px]" style={{ color: 'hsl(var(--ink-4))' }}>
+                            {isClient ? new Date(alert.createdAt).toLocaleString() : formatDateTime(alert.createdAt)}
+                          </p>
                         </div>
-                        <p className="text-caption text-muted-foreground line-clamp-1">{alert.reason}</p>
-                        <p className="text-caption text-muted-foreground">
-                          {isClient ? new Date(alert.createdAt).toLocaleString() : formatDateTime(alert.createdAt)}
-                        </p>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  );
+                })
+              )}
+            </div>
+          </section>
         </div>
 
-        {/* QUICK ACTIONS */}
-        <Card level={2}>
-          <CardHeader>
-            <CardTitle>Admin Actions</CardTitle>
-            <CardDescription>Quick access to management tools</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Button variant="outline" className="h-20 flex flex-col gap-2">
-                <Users className="w-5 h-5" />
-                <span>Manage Users</span>
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2">
-                <Cpu className="w-5 h-5" />
-                <span>Schedule Firmware</span>
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2">
-                <Activity className="w-5 h-5" />
-                <span>View Reports</span>
-              </Button>
+        {/* Admin Actions */}
+        <section>
+          <div className="mb-6">
+            <h3 className="text-[22px] font-medium tracking-tight leading-tight mb-2">Admin Actions</h3>
+            <p className="text-[13px]" style={{ color: 'hsl(var(--ink-3))' }}>
+              Quick access to management tools
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <button
+              className="paper-surface-hover rounded-lg border border-rule p-6 flex flex-col items-center justify-center gap-3 h-24 transition-all hover:border-ink-4"
+            >
+              <Users className="w-5 h-5" style={{ color: 'hsl(var(--accent))' }} aria-hidden="true" />
+              <span className="font-mono text-[12px] tracking-wide">Manage Users</span>
+            </button>
+            <button
+              className="paper-surface-hover rounded-lg border border-rule p-6 flex flex-col items-center justify-center gap-3 h-24 transition-all hover:border-ink-4"
+            >
+              <Cpu className="w-5 h-5" style={{ color: 'hsl(var(--accent))' }} aria-hidden="true" />
+              <span className="font-mono text-[12px] tracking-wide">Schedule Firmware</span>
+            </button>
+            <button
+              className="paper-surface-hover rounded-lg border border-rule p-6 flex flex-col items-center justify-center gap-3 h-24 transition-all hover:border-ink-4"
+            >
+              <Activity className="w-5 h-5" style={{ color: 'hsl(var(--accent))' }} aria-hidden="true" />
+              <span className="font-mono text-[12px] tracking-wide">View Reports</span>
+            </button>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="pt-11 border-t border-rule">
+          <div className="flex items-center justify-between flex-wrap gap-8">
+            <div className="flex gap-5 flex-wrap font-mono text-[10.5px] tracking-wide" style={{ color: 'hsl(var(--ink-4))' }}>
+              <span>BATT-x · Admin Panel</span>
+              <span className="opacity-40">·</span>
+              <span>Fleet management · Role-gated access</span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </footer>
       </div>
     </div>
   );

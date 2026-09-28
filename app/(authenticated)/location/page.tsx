@@ -1,8 +1,7 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Navigation, AlertTriangle } from "lucide-react";
+import { MapPin, Navigation, AlertTriangle, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { formatDateTime, formatDateOnly } from "@/lib/utils/date-format";
 import { LocationMap } from "@/components/location/location-map";
@@ -15,8 +14,8 @@ const DynamicLocationMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="w-full h-full flex items-center justify-center bg-muted rounded-lg">
-        <p className="text-muted-foreground">Loading map...</p>
+      <div className="w-full h-full flex items-center justify-center rounded-lg" style={{ background: 'hsl(var(--paper))' }}>
+        <p className="font-mono text-[12px]" style={{ color: 'hsl(var(--ink-3))' }}>Loading map...</p>
       </div>
     ),
   }
@@ -188,98 +187,119 @@ export default function LocationPage() {
     hasAlert: loc.hasAlert,
   })) as any[];
 
+  const selectedLocationData = locations.find((l) => l.id === selectedLocation);
+
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-heading-1">{t('title')}</h1>
-          <p className="text-body text-muted-foreground mt-1">
-            {t('description')}
-            {!useRealData && !isLoading && (
-              <span className="ml-2 text-xs text-warning">(Demo data - no real locations available)</span>
-            )}
-          </p>
+    <div className="min-h-screen" style={{ background: 'hsl(var(--bg))' }}>
+      <div className="max-w-[1240px] mx-auto px-8 py-12 space-y-16">
+        {/* Editorial Header */}
+        <div className="space-y-10">
+          <div className="eyebrow">06 — Device location</div>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-10 items-end pb-7 border-b border-rule">
+            <div className="space-y-3.5">
+              <div className="font-mono text-[11px] text-ink-4 tracking-wide uppercase">
+                {locations.length} TRACKED LOCATIONS{!useRealData && !isLoading && " · DEMO DATA"}
+              </div>
+            </div>
+            <div>
+              <h2 className="h-section">
+                Every location, <em className="font-serif italic font-normal" style={{ color: 'hsl(var(--accent))' }}>mapped.</em>
+              </h2>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Map */}
-          <Card level={2} className="lg:col-span-2 p-6">
-            <CardHeader className="p-0 mb-6">
-              <CardTitle>Map View</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="relative w-full h-[400px] lg:h-[500px] rounded-lg overflow-hidden">
-                {isLoading ? (
-                  <div className="w-full h-full flex items-center justify-center bg-muted rounded-lg">
-                    <p className="text-muted-foreground">Loading locations...</p>
-                  </div>
-                ) : (
-                  <DynamicLocationMap
-                    markers={mapMarkers}
-                    selectedId={selectedLocation}
-                    onMarkerClick={setSelectedLocation}
-                  />
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Location List */}
-          <Card level={2} className="p-6">
-            <CardHeader className="p-0 mb-6">
-              <CardTitle>Recent Locations</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {isLoading ? (
-                <div className="text-center text-muted-foreground py-8">
-                  Loading...
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'hsl(var(--accent))' }} />
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Map */}
+              <section className="lg:col-span-2">
+                <div className="mb-6">
+                  <h3 className="text-[22px] font-medium tracking-tight leading-tight mb-2">Map View</h3>
+                  <p className="text-[13px]" style={{ color: 'hsl(var(--ink-3))' }}>
+                    Real-time and historical device positions
+                  </p>
                 </div>
-              ) : (
+
+                <div className="paper-surface-hover rounded-lg border border-rule overflow-hidden">
+                  <div className="relative w-full h-[400px] lg:h-[500px]">
+                    <DynamicLocationMap
+                      markers={mapMarkers}
+                      selectedId={selectedLocation}
+                      onMarkerClick={setSelectedLocation}
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {/* Location List */}
+              <section>
+                <div className="mb-6">
+                  <h3 className="text-[22px] font-medium tracking-tight leading-tight mb-2">Recent Locations</h3>
+                  <p className="text-[13px]" style={{ color: 'hsl(var(--ink-3))' }}>
+                    Click to view details
+                  </p>
+                </div>
+
                 <div className="space-y-3">
                   {locations.map((location) => (
                     <button
                       key={location.id}
                       onClick={() => setSelectedLocation(location.id)}
-                      className={`w-full text-left p-4 rounded-lg border transition-all ${
+                      className={`w-full text-left p-5 rounded-lg border transition-all ${
                         selectedLocation === location.id
-                          ? "border-primary bg-primary/5 shadow-clay-sm"
-                          : "border-border hover:border-primary/50 hover:bg-accent"
+                          ? "border-accent"
+                          : "border-rule hover:border-ink-4"
                       }`}
+                      style={{
+                        background: selectedLocation === location.id
+                          ? 'color-mix(in srgb, hsl(var(--accent)) 5%, hsl(var(--paper)))'
+                          : 'hsl(var(--paper))',
+                      }}
                     >
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2">
-                            <MapPin className={`w-4 h-4 shrink-0 ${
-                              location.isCurrent ? "text-success" : "text-muted-foreground"
-                            }`} />
-                            <span className="text-body-sm font-semibold">{location.name}</span>
+                            <MapPin className="w-4 h-4 shrink-0" style={{
+                              color: location.isCurrent ? 'hsl(var(--ok))' : 'hsl(var(--ink-3))'
+                            }} />
+                            <span className="text-[14px] font-medium">{location.name}</span>
                           </div>
                           {location.hasAlert && (
-                            <Badge variant="destructive" className="text-xs">
-                              <AlertTriangle className="w-3 h-3" />
+                            <span className="inline-flex items-center gap-1 font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wide" style={{
+                              background: 'color-mix(in srgb, hsl(var(--danger)) 10%, hsl(var(--paper)))',
+                              color: 'hsl(var(--danger))',
+                            }}>
+                              <AlertTriangle className="w-2.5 h-2.5" />
                               Alert
-                            </Badge>
+                            </span>
                           )}
                           {location.isCurrent && (
-                            <Badge variant="success" className="text-xs">
+                            <span className="inline-flex font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wide" style={{
+                              background: 'color-mix(in srgb, hsl(var(--ok)) 10%, hsl(var(--paper)))',
+                              color: 'hsl(var(--ok))',
+                            }}>
                               Current
-                            </Badge>
+                            </span>
                           )}
                         </div>
 
-                        <p className="text-caption text-muted-foreground">
+                        <p className="font-mono text-[11px]" style={{ color: 'hsl(var(--ink-3))' }}>
                           {location.address}
                         </p>
 
                         {location.timestamp && (
-                          <p className="text-caption text-muted-foreground">
+                          <p className="font-mono text-[10px]" style={{ color: 'hsl(var(--ink-4))' }}>
                             {isClient ? location.timestamp.toLocaleString() : formatDateTime(location.timestamp)}
                           </p>
                         )}
 
                         {location.hasAlert && location.alertType && (
-                          <p className="text-caption text-danger">
+                          <p className="text-[12px]" style={{ color: 'hsl(var(--danger))' }}>
                             {location.alertType}
                           </p>
                         )}
@@ -287,54 +307,60 @@ export default function LocationPage() {
                     </button>
                   ))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </section>
+            </div>
 
-        {/* Location Details */}
-        {selectedLocation && !isLoading && (
-          <Card level={2} className="p-6">
-            <CardHeader className="p-0 mb-6">
-              <CardTitle>Location Details</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {(() => {
-                const location = locations.find((l) => l.id === selectedLocation);
-                if (!location) return null;
+            {/* Location Details */}
+            {selectedLocationData && (
+              <section>
+                <div className="mb-6">
+                  <h3 className="text-[22px] font-medium tracking-tight leading-tight mb-2">Location Details</h3>
+                  <p className="text-[13px]" style={{ color: 'hsl(var(--ink-3))' }}>
+                    Coordinates and status for selected location
+                  </p>
+                </div>
 
-                return (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="clay-inset p-4 rounded-lg space-y-1">
-                      <p className="text-caption text-muted-foreground">Latitude</p>
-                      <p className="text-body font-semibold tabular-nums">{location.lat.toFixed(4)}</p>
-                    </div>
-                    <div className="clay-inset p-4 rounded-lg space-y-1">
-                      <p className="text-caption text-muted-foreground">Longitude</p>
-                      <p className="text-body font-semibold tabular-nums">{location.lng.toFixed(4)}</p>
-                    </div>
-                    <div className="clay-inset p-4 rounded-lg space-y-1">
-                      <p className="text-caption text-muted-foreground">Status</p>
-                      <p className={`text-body font-semibold ${
-                        location.hasAlert ? "text-danger" : "text-success"
-                      }`}>
-                        {location.hasAlert ? "Alert Triggered" : "Normal"}
-                      </p>
-                    </div>
-                    <div className="clay-inset p-4 rounded-lg space-y-1">
-                      <p className="text-caption text-muted-foreground">Recorded</p>
-                      <p className="text-body font-semibold">
-                        {location.timestamp
-                          ? (isClient ? location.timestamp.toLocaleDateString() : formatDateOnly(location.timestamp))
-                          : "Live"}
-                      </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  <div className="paper-surface-hover rounded-lg border border-rule p-6">
+                    <div className="smallcaps mb-3" style={{ color: 'hsl(var(--ink-3))' }}>Latitude</div>
+                    <div className="font-mono text-[20px] font-light tabular-nums">{selectedLocationData.lat.toFixed(4)}</div>
+                  </div>
+                  <div className="paper-surface-hover rounded-lg border border-rule p-6">
+                    <div className="smallcaps mb-3" style={{ color: 'hsl(var(--ink-3))' }}>Longitude</div>
+                    <div className="font-mono text-[20px] font-light tabular-nums">{selectedLocationData.lng.toFixed(4)}</div>
+                  </div>
+                  <div className="paper-surface-hover rounded-lg border border-rule p-6">
+                    <div className="smallcaps mb-3" style={{ color: 'hsl(var(--ink-3))' }}>Status</div>
+                    <div className={`text-[16px] font-medium`} style={{
+                      color: selectedLocationData.hasAlert ? 'hsl(var(--danger))' : 'hsl(var(--ok))'
+                    }}>
+                      {selectedLocationData.hasAlert ? "Alert Triggered" : "Normal"}
                     </div>
                   </div>
-                );
-              })()}
-            </CardContent>
-          </Card>
+                  <div className="paper-surface-hover rounded-lg border border-rule p-6">
+                    <div className="smallcaps mb-3" style={{ color: 'hsl(var(--ink-3))' }}>Recorded</div>
+                    <div className="font-mono text-[16px] font-light">
+                      {selectedLocationData.timestamp
+                        ? (isClient ? selectedLocationData.timestamp.toLocaleDateString() : formatDateOnly(selectedLocationData.timestamp))
+                        : "Live"}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+          </>
         )}
+
+        {/* Footer */}
+        <footer className="pt-11 border-t border-rule">
+          <div className="flex items-center justify-between flex-wrap gap-8">
+            <div className="flex gap-5 flex-wrap font-mono text-[10.5px] tracking-wide" style={{ color: 'hsl(var(--ink-4))' }}>
+              <span>BATT-x · Location Tracking</span>
+              <span className="opacity-40">·</span>
+              <span>GPS coordinates signed with HMAC-SHA256</span>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );

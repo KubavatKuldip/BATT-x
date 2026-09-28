@@ -38,8 +38,8 @@ export async function GET(
         id: device.id,
         serialNumber: device.serialNumber,
         nickname: device.nickname,
-        status: device.status,
-        lastSeenAt: device.lastSeenAt,
+        status: device.connectionStatus,
+        lastSyncAt: device.lastSyncAt,
       },
       reading: latestReading,
     });

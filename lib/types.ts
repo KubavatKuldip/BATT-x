@@ -9,7 +9,7 @@ export type SensorData = {
 
 export type DeviceStatus = 'normal' | 'warning' | 'cutoff';
 
-export type ConnectionStatus = 'connected' | 'disconnected' | 'pairing' | 'offline';
+export type ConnectionStatus = 'connected' | 'disconnected' | 'pairing' | 'offline' | 'reconnecting';
 
 export type AlertType = 'warning' | 'cutoff' | 'resolved' | 'reset' | 'info';
 

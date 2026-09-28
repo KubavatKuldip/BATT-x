@@ -47,7 +47,7 @@ deploy-*.sh
 railway-cli-audit.md
 
 # Prisma
-prisma/migrations/
+# Note: migrations/ MUST be committed for production deployment
 
 # IDE
 .vscode/

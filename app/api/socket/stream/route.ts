@@ -115,13 +115,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Update device last seen
+    // Update device last sync
     alertPromises.push(
       prisma.device.update({
         where: { id: data.deviceId },
         data: {
-          lastSeenAt: new Date(),
-          status: alertPromises.length > 0 ? "WARNING" : "ONLINE",
+          lastSyncAt: new Date(),
+          connectionStatus: alertPromises.length > 0 ? "CONNECTED" : "CONNECTED",
         },
       })
     );

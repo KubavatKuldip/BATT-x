@@ -50,7 +50,16 @@
     "signInDescription": "Sign in to monitor your EV battery safety",
     "signInButton": "Sign In",
     "newToBattX": "New to BATT-X?",
-    "signUpButton": "Create an account"
+    "signUpButton": "Create an account",
+    "createAccountTitle": "Create Your Account",
+    "signUpDescription": "Sign up to start monitoring your EV battery safety",
+    "alreadyHaveAccount": "Already have an account?",
+    "signingUp": "Creating account...",
+    "signUpFailed": "Sign Up Failed",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "accountCreated": "Account Created",
+    "accountCreatedDesc": "Welcome to BATT-X! Redirecting to dashboard..."
   },
   "dashboard": {
     "title": "Dashboard",

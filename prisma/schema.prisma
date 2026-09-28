@@ -15,6 +15,7 @@ enum UserRole {
   FLEET_MANAGER
   TECHNICIAN
   ADMIN
+  SUPER_ADMIN
 }
 
 enum VehicleType {

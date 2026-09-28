@@ -1,9 +1,7 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
-import { motion } from "framer-motion";
 
 interface SensorCardProps {
   icon: LucideIcon;
@@ -12,71 +10,125 @@ interface SensorCardProps {
   unit: string;
   status: 'normal' | 'warning' | 'critical';
   className?: string;
+  // Reference design additional props
+  verdict?: string;
+  safeThreshold?: string;
+  warnThreshold?: string;
+  sensorSource?: string;
+  percentage?: number;
 }
 
-const statusColors = {
-  normal: 'text-success',
-  warning: 'text-warning',
-  critical: 'text-danger',
+const statusClasses = {
+  normal: '',
+  warning: 'warn',
+  critical: 'crit',
 };
 
-const statusBgColors = {
-  normal: 'bg-success/10',
-  warning: 'bg-warning/10',
-  critical: 'bg-danger/10',
-};
-
-export function SensorCard({ icon: Icon, label, value, unit, status, className }: SensorCardProps) {
-  // Surface the reading as one accessible string so the screen reader doesn't
-  // have to stitch together "Temperature" + "35.4" + "°C" + "warning" from
-  // disconnected spans. The visible text is unchanged.
-  const accessibleName = `${label}: ${value} ${unit}, ${status}`;
+export function SensorCard({
+  icon: Icon,
+  label,
+  value,
+  unit,
+  status,
+  verdict,
+  safeThreshold,
+  warnThreshold,
+  sensorSource,
+  percentage = 50,
+  className
+}: SensorCardProps) {
+  const accessibleName = `${label}: ${value} ${unit}, ${status}${verdict ? `, ${verdict}` : ''}`;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+    <div
+      className={cn(
+        "reading paper-surface-hover rounded-lg border border-rule transition-colors",
+        statusClasses[status],
+        className
+      )}
+      role="group"
+      aria-label={accessibleName}
     >
-      <Card
-        level={2}
-        className={cn("p-6 transition-all hover:shadow-clay-lg", className)}
-        role="group"
-        aria-label={accessibleName}
-      >
-        <div className="flex items-start justify-between mb-4">
-          <div
-            className={cn("p-3 rounded-lg", statusBgColors[status])}
-            aria-hidden="true"
-          >
-            <Icon className={cn("w-5 h-5", statusColors[status])} />
-          </div>
-        </div>
+      {/* Label */}
+      <div className="label flex justify-between items-baseline gap-2 mb-5">
+        <span className="smallcaps">{label}</span>
+        {sensorSource && (
+          <span className="font-mono text-[9px] text-ink-4 tracking-wider uppercase overflow-hidden text-ellipsis whitespace-nowrap">
+            {sensorSource}
+          </span>
+        )}
+      </div>
 
-        <div className="space-y-1">
-          <p className="text-body-sm text-muted-foreground">{label}</p>
-          <div className="flex items-baseline gap-1">
-            <motion.span
-              key={value}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className={cn(
-                "text-heading-2 font-semibold tabular-nums",
-                statusColors[status]
-              )}
-            >
-              {value}
-            </motion.span>
-            <span className="text-body text-muted-foreground">{unit}</span>
-          </div>
-          {/*
-            Status text is duplicated here (visually hidden) so a screen reader
-            who focuses the number still hears "warning" / "critical". The
-            color is no longer the only signal.
-          */}
-          <p className="sr-only">Status: {status}</p>
+      {/* Value */}
+      <div className="value flex items-baseline gap-1.5 mb-3.5 transition-colors duration-350">
+        <span className="num font-mono text-[38px] font-light leading-none tracking-tight tabular-nums transition-colors duration-350">
+          {value}
+        </span>
+        <span className="unit font-mono text-[13px] text-ink-3 font-normal tracking-wide">
+          {unit}
+        </span>
+      </div>
+
+      {/* Verdict */}
+      {verdict && (
+        <div className="verdict text-[14px] font-medium text-ink-2 leading-snug mb-4 min-h-[20px]">
+          {verdict}
         </div>
-      </Card>
-    </motion.div>
+      )}
+
+      {/* Progress Bar */}
+      <div className="bar h-0.5 bg-rule-soft relative overflow-hidden mb-3.5">
+        <i
+          className="absolute inset-y-0 left-0 bg-accent transition-all duration-600 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+          style={{ width: `${Math.min(100, Math.max(0, percentage))}%` }}
+          aria-hidden="true"
+        />
+        {/* Optional threshold marker */}
+        {warnThreshold && (
+          <span
+            className="mark absolute top-[-2px] bottom-[-2px] w-px bg-ink-4"
+            style={{ left: '60%' }}
+            aria-hidden="true"
+          />
+        )}
+      </div>
+
+      {/* Footer with thresholds */}
+      {(safeThreshold || warnThreshold) && (
+        <div className="foot font-mono text-[10px] text-ink-4 tracking-wide">
+          {safeThreshold} {warnThreshold && `· ${warnThreshold}`}
+        </div>
+      )}
+
+      {/* Screen reader status */}
+      <p className="sr-only">Status: {status}</p>
+
+      <style jsx>{`
+        .reading.warn {
+          background: color-mix(in srgb, hsl(var(--warn)) 5%, hsl(var(--paper)));
+        }
+        .reading.warn .num {
+          color: hsl(var(--warn));
+        }
+        .reading.warn .verdict {
+          color: hsl(var(--warn));
+        }
+        .reading.warn .bar i {
+          background: hsl(var(--warn));
+        }
+        .reading.crit {
+          background: color-mix(in srgb, hsl(var(--danger)) 5%, hsl(var(--paper)));
+        }
+        .reading.crit .num {
+          color: hsl(var(--danger));
+        }
+        .reading.crit .verdict {
+          color: hsl(var(--danger));
+        }
+        .reading.crit .bar i {
+          background: hsl(var(--danger));
+        }
+      `}</style>
+    </div>
   );
 }

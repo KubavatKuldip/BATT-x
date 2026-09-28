@@ -76,14 +76,9 @@ export async function GET(req: NextRequest) {
     const [updates, total] = await Promise.all([
       prisma.firmwareUpdate.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: { releasedAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
-        include: {
-          device: {
-            select: { serialNumber: true, nickname: true, vehicleType: true },
-          },
-        },
       }),
       prisma.firmwareUpdate.count({ where }),
     ]);

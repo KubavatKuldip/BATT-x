@@ -297,54 +297,115 @@ export default function DashboardPage() {
     );
   }
 
+  // Calculate sensor status helpers
+  const getTempStatus = () => getSensorStatus(sensorData.temperature, 50, 60);
+  const getGasStatus = () => getSensorStatus(sensorData.gasLevel, 0.2, 0.6);
+  const getCurrentStatus = () => getSensorStatus(sensorData.current, 20, 30);
+  const getVoltStatus = () => {
+    if (sensorData.voltage > 58 || sensorData.voltage < 44) return 'critical';
+    if (sensorData.voltage > 52 || sensorData.voltage < 46) return 'warning';
+    return 'normal';
+  };
+
+  // Calculate percentage for progress bars
+  const getTempPercent = () => Math.min(100, (sensorData.temperature / 70) * 100);
+  const getGasPercent = () => Math.min(100, (sensorData.gasLevel / 1.5) * 100);
+  const getCurrentPercent = () => Math.min(100, (sensorData.current / 35) * 100);
+  const getVoltPercent = () => Math.min(100, ((sensorData.voltage - 40) / 20) * 100);
+
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header with device selector and sync button */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-heading-1">{t('title')}</h1>
-            <p className="text-body text-muted-foreground mt-1">
-              {t('description')}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div
-              className="flex items-center gap-2 text-caption text-muted-foreground"
-              // aria-live so a screen reader announces the transition
-              // (e.g. "Demo" → "Offline" → "Live") without focus.
-              aria-live="polite"
-            >
-              {connectionStatus === 'connected' ? (
-                <>
-                  <Wifi className="w-3 h-3 text-success" aria-hidden="true" />
-                  <span>
-                    {dataSource === 'real'
-                      ? (socketConnected ? t('liveWebSocket') : t('livePolling'))
-                      : (socketConnected ? t('demoWebSocket') : t('demo'))}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <WifiOff className="w-3 h-3 text-muted-foreground" aria-hidden="true" />
-                  <span>{t('offline')}</span>
-                </>
-              )}
+    <div className="min-h-screen" style={{ background: 'hsl(var(--bg))' }}>
+      <div className="max-w-[1240px] mx-auto px-8 py-12 space-y-16">
+        {/* Editorial Header */}
+        <div className="space-y-10">
+          <div className="eyebrow">02 — Live readings</div>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-10 items-end pb-7 border-b border-rule">
+            <div className="space-y-3.5">
+              <div className="font-mono text-[11px] text-ink-4 tracking-wide">
+                UPDATED {lastSyncAt ? lastSyncAt.toTimeString().slice(0, 8) : '--:--:--'} · 4 SENSORS
+              </div>
             </div>
-            <Button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              variant="outline"
-              size="lg"
-              aria-label={t('syncNow')}
-            >
-              <RefreshCw
-                className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
-                aria-hidden="true"
-              />
-              {t('syncNow')}
-            </Button>
+            <div>
+              <h2 className="h-section">
+                What the battery is <em className="font-serif italic font-normal" style={{ color: 'hsl(var(--accent))' }}>doing right now.</em>
+              </h2>
+            </div>
           </div>
+        </div>
+
+        {/* Sensor Grid - Editorial Style with proper responsive behavior */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
+          {/* Temperature */}
+          <SensorCard
+            icon={Thermometer}
+            label="Battery temperature"
+            value={sensorData.temperature.toFixed(1)}
+            unit="°C"
+            status={getTempStatus()}
+            verdict={
+              getTempStatus() === 'critical' ? 'Getting hot' :
+              getTempStatus() === 'warning' ? 'Warmer than usual' :
+              'Comfortable'
+            }
+            sensorSource="DS18B20"
+            safeThreshold="SAFE < 60 °C"
+            warnThreshold="WARN ≥ 50 °C"
+            percentage={getTempPercent()}
+          />
+
+          {/* Gas */}
+          <SensorCard
+            icon={Wind}
+            label="Hydrogen in air"
+            value={(sensorData.gasLevel / 100).toFixed(2)}
+            unit="%vol"
+            status={getGasStatus()}
+            verdict={
+              getGasStatus() === 'critical' ? 'Detected' :
+              getGasStatus() === 'warning' ? 'Traces detected' :
+              'Clean air'
+            }
+            sensorSource="XENSIV TCI-B"
+            safeThreshold="SAFE < 0.6"
+            warnThreshold="WARN ≥ 0.2 %vol"
+            percentage={getGasPercent()}
+          />
+
+          {/* Current */}
+          <SensorCard
+            icon={Activity}
+            label="Power being drawn"
+            value={sensorData.current.toFixed(1)}
+            unit="A"
+            status={getCurrentStatus()}
+            verdict={
+              getCurrentStatus() === 'critical' ? 'High draw' :
+              getCurrentStatus() === 'warning' ? 'Drawing more' :
+              'Normal draw'
+            }
+            sensorSource="ACS37800"
+            safeThreshold="SAFE < 20 A"
+            warnThreshold="WARN ≥ 20 A"
+            percentage={getCurrentPercent()}
+          />
+
+          {/* Voltage */}
+          <SensorCard
+            icon={Zap}
+            label="Pack voltage"
+            value={sensorData.voltage.toFixed(1)}
+            unit="V"
+            status={getVoltStatus()}
+            verdict={
+              getVoltStatus() === 'critical' ? 'Out of range' :
+              getVoltStatus() === 'warning' ? 'Slightly high' :
+              'Healthy'
+            }
+            sensorSource="divider"
+            safeThreshold="SAFE 44–58 V"
+            warnThreshold="WARN ≥ 58 V"
+            percentage={getVoltPercent()}
+          />
         </div>
 
         {/* Status Header */}
@@ -355,65 +416,69 @@ export default function DashboardPage() {
           lastSyncAt={lastSyncAt}
         />
 
-        {/* Sensor Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          {/* Battery Card - spans 2 columns on larger screens */}
-          <div className="sm:col-span-2 lg:col-span-1">
-            <BatteryCard
-              percentage={sensorData.batteryPercent}
-              isCharging={sensorData.current > 1}
-              status={
-                sensorData.batteryPercent < 20
-                  ? 'critical'
-                  : sensorData.batteryPercent < 40
-                  ? 'warning'
-                  : 'normal'
-              }
-            />
+        {/* How It Works Section */}
+        <section className="mt-16">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-10 items-end pb-7 border-b border-rule mb-12">
+            <div className="space-y-3.5">
+              <div className="eyebrow">06 — How it works</div>
+              <div className="font-mono text-[11px] text-ink-4 tracking-wide uppercase">
+                SENSE · DECIDE · RECORD
+              </div>
+            </div>
+            <div>
+              <h2 className="h-section">
+                Three things, done <em className="font-serif italic font-normal" style={{ color: 'hsl(var(--accent))' }}>properly.</em>
+              </h2>
+            </div>
           </div>
 
-          {/* Temperature */}
-          <SensorCard
-            icon={Thermometer}
-            label="Temperature"
-            value={sensorData.temperature.toFixed(1)}
-            unit="°C"
-            status={getSensorStatus(sensorData.temperature, 55, 65)}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-t border-rule">
+            <div className="p-9 border-r-0 md:border-r border-b border-rule paper-surface-hover">
+              <div className="font-mono text-[11px] text-accent tracking-wide font-medium mb-6">01</div>
+              <h4 className="text-[22px] font-medium tracking-tight leading-tight mb-3.5">
+                Senses <em className="font-serif italic font-normal" style={{ color: 'hsl(var(--accent))' }}>every second.</em>
+              </h4>
+              <p className="text-[14.5px] leading-relaxed max-w-[34ch]" style={{ color: 'hsl(var(--ink-2))' }}>
+                Four channels — hydrogen, temperature, current, and voltage — are sampled continuously. Hydrogen is the earliest precursor, appearing up to 639 seconds before smoke.
+              </p>
+            </div>
 
-          {/* Voltage */}
-          <SensorCard
-            icon={Zap}
-            label="Voltage"
-            value={sensorData.voltage.toFixed(2)}
-            unit="V"
-            status={
-              sensorData.voltage > 54 || sensorData.voltage < 40
-                ? 'critical'
-                : sensorData.voltage > 52 || sensorData.voltage < 42
-                ? 'warning'
-                : 'normal'
-            }
-          />
+            <div className="p-9 border-r-0 md:border-r border-b border-rule paper-surface-hover">
+              <div className="font-mono text-[11px] text-accent tracking-wide font-medium mb-6">02</div>
+              <h4 className="text-[22px] font-medium tracking-tight leading-tight mb-3.5">
+                Decides <em className="font-serif italic font-normal" style={{ color: 'hsl(var(--accent))' }}>with care.</em>
+              </h4>
+              <p className="text-[14.5px] leading-relaxed max-w-[34ch]" style={{ color: 'hsl(var(--ink-2))' }}>
+                Temperature alone is slow. Gas alone can dilute. BATT-x fuses them with rate-of-change logic, then gives the rider a 90-second grace window before any cutoff.
+              </p>
+            </div>
 
-          {/* Current */}
-          <SensorCard
-            icon={Activity}
-            label="Current"
-            value={sensorData.current.toFixed(2)}
-            unit="A"
-            status={getSensorStatus(sensorData.current, 12, 15)}
-          />
+            <div className="p-9 border-b border-rule paper-surface-hover">
+              <div className="font-mono text-[11px] text-accent tracking-wide font-medium mb-6">03</div>
+              <h4 className="text-[22px] font-medium tracking-tight leading-tight mb-3.5">
+                Records <em className="font-serif italic font-normal" style={{ color: 'hsl(var(--accent))' }}>permanently.</em>
+              </h4>
+              <p className="text-[14.5px] leading-relaxed max-w-[34ch]" style={{ color: 'hsl(var(--ink-2))' }}>
+                Every entry is signed with HMAC-SHA256 the moment it is written. If an insurer or workshop needs proof of what the battery experienced, the ledger holds it.
+              </p>
+            </div>
+          </div>
+        </section>
 
-          {/* Gas Level */}
-          <SensorCard
-            icon={Wind}
-            label="Gas Level"
-            value={sensorData.gasLevel.toFixed(0)}
-            unit="ppm"
-            status={getSensorStatus(sensorData.gasLevel, 60, 80)}
-          />
-        </div>
+        {/* Footer */}
+        <footer className="mt-24 pt-11 border-t border-rule">
+          <div className="flex items-center justify-between flex-wrap gap-8">
+            <div className="flex gap-5 flex-wrap font-mono text-[10.5px] tracking-wide" style={{ color: 'hsl(var(--ink-4))' }}>
+              <span>BATT-x · Unit 0042</span>
+              <span className="opacity-40">·</span>
+              <span>Firmware v1.0.4 · keys in eFuse</span>
+              <span className="opacity-40">·</span>
+              <span>AES-256-GCM · HMAC-SHA256</span>
+              <span className="opacity-40">·</span>
+              <span>Rev 2026.09</span>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
