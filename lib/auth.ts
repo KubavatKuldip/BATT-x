@@ -101,6 +101,7 @@ export const authOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+  trustHost: true,
 };
 
 // Single NextAuth instance — both the route handler and any
