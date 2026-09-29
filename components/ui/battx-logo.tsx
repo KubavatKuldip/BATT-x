@@ -44,8 +44,8 @@ export function BattXLogo({
   // Use resolvedTheme to handle "system" theme setting
   const currentTheme = mounted ? (resolvedTheme || theme) : "light";
   const logoSrc = currentTheme === "dark"
-    ? "/images/logo-dark.jpg"
-    : "/images/logo-light.jpg";
+    ? "/images/logo-dark.png"
+    : "/images/logo-light.png";
 
   if (!mounted) {
     // Return placeholder during SSR to avoid hydration mismatch
