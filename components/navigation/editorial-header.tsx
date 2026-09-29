@@ -2,9 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Wifi, WifiOff, Settings } from "lucide-react";
+import { Wifi, WifiOff, Settings, LogOut, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useTranslations } from 'next-intl';
 
 interface EditorialHeaderProps {
   connectionStatus?: 'connected' | 'disconnected' | 'pairing' | 'offline';
@@ -16,6 +26,8 @@ export function EditorialHeader({
   recordStatus = 'sealed'
 }: EditorialHeaderProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const t = useTranslations('common');
 
   return (
     <header
@@ -76,17 +88,45 @@ export function EditorialHeader({
             )}
           </div>
 
-          {/* Settings link */}
-          <Link
-            href="/settings"
-            className="p-2 rounded-lg hover:bg-rule-soft transition-colors"
-            aria-label="Settings"
-          >
-            <Settings className="w-4 h-4" style={{ color: 'hsl(var(--ink-3))' }} />
-          </Link>
-
           {/* Theme toggle */}
           <ThemeToggle />
+
+          {/* User menu with logout */}
+          {session?.user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label="Account menu"
+                className="p-2 rounded-lg hover:bg-rule-soft transition-colors"
+              >
+                <User className="w-4 h-4" style={{ color: 'hsl(var(--ink-3))' }} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="text-sm font-medium truncate">
+                    {session.user.name || session.user.email}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {(session.user as any)?.role || 'CONSUMER'}
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/settings">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  {t('signOut') || 'Sign Out'}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
         </div>
       </div>
     </header>

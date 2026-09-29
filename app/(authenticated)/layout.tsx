@@ -1,5 +1,6 @@
 import { EditorialHeader } from "@/components/navigation/editorial-header";
 import { BottomNav } from "@/components/navigation/bottom-nav";
+import { Sidebar } from "@/components/navigation/sidebar";
 
 export default function AuthenticatedLayout({
   children,
@@ -18,10 +19,17 @@ export default function AuthenticatedLayout({
       >
         Skip to main content
       </a>
-      <EditorialHeader />
-      <main id="main-content" className="pb-16 lg:pb-0" tabIndex={-1}>
+      {/* Desktop sidebar navigation */}
+      <Sidebar />
+      {/* Mobile/tablet header */}
+      <div className="lg:hidden">
+        <EditorialHeader />
+      </div>
+      {/* Main content with left margin on desktop to account for fixed sidebar */}
+      <main id="main-content" className="pb-16 lg:pb-0 lg:pl-64" tabIndex={-1}>
         {children}
       </main>
+      {/* Mobile bottom navigation */}
       <BottomNav />
     </div>
   );

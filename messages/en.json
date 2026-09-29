@@ -82,7 +82,11 @@
     "pairDevice": "Pair a Device",
     "demo": "Demo Mode - Using simulated data",
     "syncNow": "Sync Now",
-    "redirecting": "Redirecting to dashboard..."
+    "synced": "Synced",
+    "redirecting": "Redirecting to dashboard...",
+    "noPairedDevice": "No Vehicle Paired",
+    "noPairedDeviceDescription": "Connect your BATT-X device to your vehicle battery to start monitoring live sensor data, safety alerts, and charging analytics.",
+    "pairVehicle": "Pair Vehicle"
   },
   "alerts": {
     "title": "Alerts",

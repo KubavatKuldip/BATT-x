@@ -25,7 +25,6 @@ export function BottomNav() {
     { name: t('location'), href: "/location", icon: MapPin },
     { name: t('safety'), href: "/safety", icon: Shield },
     { name: t('devices'), href: "/devices/pairing", icon: Cpu },
-    { name: t('settings'), href: "/settings", icon: Settings },
   ];
 
   return (

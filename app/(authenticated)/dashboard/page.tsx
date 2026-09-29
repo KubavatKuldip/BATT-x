@@ -289,10 +289,30 @@ export default function DashboardPage() {
     });
   };
 
+  // Show empty state when no device is paired instead of infinite redirect
   if (!sensorData) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-pulse text-muted-foreground">{t('redirecting')}</div>
+      <div className="min-h-screen" style={{ background: 'hsl(var(--bg))' }}>
+        <div className="max-w-[1240px] mx-auto px-8 py-12">
+          <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8">
+            <div className="text-center space-y-4">
+              <h1 className="text-4xl font-bold tracking-tight">
+                {t('noPairedDevice') || 'No Vehicle Paired'}
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-[60ch]">
+                {t('noPairedDeviceDescription') || 'Connect your BATT-X device to your vehicle battery to start monitoring live sensor data, safety alerts, and charging analytics.'}
+              </p>
+            </div>
+            <Button
+              size="lg"
+              onClick={() => window.location.href = '/devices/pairing'}
+              className="gap-2"
+            >
+              <Activity className="w-5 h-5" />
+              {t('pairVehicle') || 'Pair Vehicle'}
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
