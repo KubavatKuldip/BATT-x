@@ -18,6 +18,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
     "@prisma/client": "5.10.2",
