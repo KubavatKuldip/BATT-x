@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Check if demo user already exists (idempotency)
+    // 3. Check if demo user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email: "demo@battx.com" },
       select: {
@@ -54,11 +54,21 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // 4. Hash password using same algorithm as signup (bcryptjs, 12 rounds)
+    const hashedPassword = await hash("BATTxDemo!2026#47", 12);
+
     if (existingUser) {
+      // Update existing user's password
+      await prisma.user.update({
+        where: { email: "demo@battx.com" },
+        data: { password: hashedPassword },
+      });
+
       return NextResponse.json({
         success: true,
         created: false,
-        message: "Demo user already exists",
+        passwordUpdated: true,
+        message: "Demo user password updated",
         user: {
           id: existingUser.id,
           email: existingUser.email,
@@ -68,9 +78,6 @@ export async function POST(req: NextRequest) {
         },
       });
     }
-
-    // 4. Hash password using same algorithm as signup (bcryptjs, 12 rounds)
-    const hashedPassword = await hash("BATTxDemo!2026#47", 12);
 
     // 5. Create demo user with Prisma-generated CUID
     const demoUser = await prisma.user.create({
