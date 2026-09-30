@@ -65,6 +65,7 @@ export default function DashboardPage() {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [realDeviceId, setRealDeviceId] = useState<string | null>(null);
+  const [activeDevice, setActiveDevice] = useState<any | null>(null);
   const [dataSource, setDataSource] = useState<'real' | 'demo'>('demo');
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -117,6 +118,7 @@ export default function DashboardPage() {
 
           if (activeDevice) {
             setRealDeviceId(activeDevice.id);
+            setActiveDevice(activeDevice);
 
             // Try to fetch latest reading
             const readingResponse = await fetch(`/api/devices/${activeDevice.id}/latest-reading`);
@@ -341,6 +343,26 @@ export default function DashboardPage() {
           <div className="eyebrow">02 — Live readings</div>
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-10 items-end pb-7 border-b border-rule">
             <div className="space-y-3.5">
+              {/* Active Device Indicator */}
+              {activeDevice && (
+                <div className="flex items-center gap-3 mb-4 p-3 rounded-lg border border-rule" style={{ background: 'hsl(var(--paper))' }}>
+                  <div className={`w-2 h-2 rounded-full ${activeDevice.connectionStatus === 'CONNECTED' ? 'bg-ok animate-pulse' : 'bg-ink-4'}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-mono text-[11px] text-ink-4 tracking-wide uppercase">Monitoring</div>
+                    <div className="text-[14px] font-medium truncate">
+                      {activeDevice.nickname || `Device ${activeDevice.serialNumber.slice(-6)}`}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-mono" style={{
+                    background: dataSource === 'real'
+                      ? 'color-mix(in srgb, hsl(var(--ok)) 15%, transparent)'
+                      : 'color-mix(in srgb, hsl(var(--accent)) 15%, transparent)',
+                    color: dataSource === 'real' ? 'hsl(var(--ok))' : 'hsl(var(--accent))'
+                  }}>
+                    {dataSource === 'real' ? (socketConnected ? '● LIVE' : '● DATABASE') : '● DEMO'}
+                  </div>
+                </div>
+              )}
               <div className="font-mono text-[11px] text-ink-4 tracking-wide">
                 UPDATED {lastSyncAt ? lastSyncAt.toTimeString().slice(0, 8) : '--:--:--'} · 4 SENSORS
               </div>

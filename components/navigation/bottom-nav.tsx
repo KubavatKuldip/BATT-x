@@ -20,11 +20,11 @@ export function BottomNav() {
 
   const navigation = [
     { name: t('dashboard'), href: "/dashboard", icon: LayoutDashboard },
+    { name: t('devices'), href: "/devices", icon: Cpu },
     { name: t('alerts'), href: "/alerts", icon: Bell },
     { name: t('analytics'), href: "/analytics", icon: TrendingUp },
     { name: t('location'), href: "/location", icon: MapPin },
     { name: t('safety'), href: "/safety", icon: Shield },
-    { name: t('devices'), href: "/devices/pairing", icon: Cpu },
   ];
 
   return (

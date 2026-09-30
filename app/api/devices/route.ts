@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
         vehicleType: validation.data.vehicleType,
         nickname: validation.data.nickname,
         thresholds: defaultThresholds,
-        connectionStatus: "OFFLINE",
+        connectionStatus: "PAIRING", // Changed from OFFLINE to reflect actual state
       },
       select: {
         id: true,

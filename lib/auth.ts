@@ -22,13 +22,13 @@ export const authOptions = {
 
         // Demo credentials shortcut — local dev only. Refuses to run in production
         // and refuses to run if NEXTAUTH_SECRET is the placeholder, so a misconfigured
-        // deploy can't accept "demo123".
+        // deploy can't accept demo credentials.
         if (
           process.env.NODE_ENV !== "production" &&
           process.env.NEXTAUTH_SECRET !== "your-secret-key-change-in-production" &&
           !process.env.NEXTAUTH_SECRET?.startsWith("your-") &&
           email === "demo@battx.com" &&
-          credentials.password === "demo123"
+          credentials.password === "BATTxDemo!2026#47"
         ) {
           return {
             id: "demo-user",

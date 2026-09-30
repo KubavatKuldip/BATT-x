@@ -61,6 +61,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Device exists and is paired - update status to CONNECTED and return deviceId
+    await prisma.device.update({
+      where: { id: device.id },
+      data: {
+        connectionStatus: "CONNECTED",
+        lastSyncAt: new Date(),
+      },
+    });
+
     // Device exists and is paired - return deviceId
     return NextResponse.json({
       paired: true,

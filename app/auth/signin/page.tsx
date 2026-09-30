@@ -62,7 +62,7 @@ function SignInForm() {
 
   const fillDemo = () => {
     setEmail("demo@battx.com");
-    setPassword("demo1234");
+    setPassword("BATTxDemo!2026#47");
   };
 
   return (
@@ -99,7 +99,7 @@ function SignInForm() {
               <Input
                 id="password"
                 type="password"
-                placeholder="demo1234"
+                placeholder="BATTxDemo!2026#47"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -139,7 +139,7 @@ function SignInForm() {
               className="w-full p-3 rounded-lg bg-muted text-center hover:bg-muted/70 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
               <p className="text-caption text-slate-700 dark:text-slate-300">
-                Demo: <span className="font-mono">demo@battx.com</span> / <span className="font-mono">demo1234</span>
+                Demo: <span className="font-mono">demo@battx.com</span> / <span className="font-mono">BATTxDemo!2026#47</span>
               </p>
               <p className="text-caption text-primary mt-0.5">Click to fill</p>
             </button>
