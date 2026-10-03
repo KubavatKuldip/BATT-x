@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
         serialNumber: true,
         userId: true,
         connectionStatus: true,
-        createdAt: true,
+        pairedAt: true,
       },
     });
 
@@ -106,7 +106,6 @@ export async function GET(req: NextRequest) {
         ownerName: device.user.name,
         connectionStatus: device.connectionStatus,
         lastSyncAt: device.lastSyncAt,
-        createdAt: device.createdAt,
         pairedAt: device.pairedAt,
       } : {
         exists: false,
