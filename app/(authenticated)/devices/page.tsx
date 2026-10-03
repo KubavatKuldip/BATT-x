@@ -52,7 +52,7 @@ export default function DevicesPage() {
       const response = await fetch("/api/devices");
       if (response.ok) {
         const data = await response.json();
-        setDevices(data);
+        setDevices(data.devices || data);
       } else {
         toast({
           variant: "destructive",

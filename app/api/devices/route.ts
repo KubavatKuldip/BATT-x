@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       orderBy: { pairedAt: "desc" },
     });
 
-    return NextResponse.json(devices);
+    return NextResponse.json({ devices });
   } catch (error) {
     return handleApiError(error);
   }
