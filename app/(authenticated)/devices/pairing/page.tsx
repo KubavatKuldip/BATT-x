@@ -309,17 +309,17 @@ export default function DevicePairingPage() {
                   }}
                   className="w-full h-12 rounded-full font-medium text-[14px] transition-all"
                   style={{
-                    background: 'var(--ember)',
-                    color: '#fff',
+                    background: '#FF5A1F',
+                    color: '#ffffff',
                     boxShadow: '0 2px 10px rgba(255,90,31,.28)'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--ember-2)';
+                    e.currentTarget.style.background = '#ff6b33';
                     e.currentTarget.style.transform = 'translateY(-2px)';
                     e.currentTarget.style.boxShadow = '0 6px 22px rgba(255,90,31,.36)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'var(--ember)';
+                    e.currentTarget.style.background = '#FF5A1F';
                     e.currentTarget.style.transform = 'translateY(0)';
                     e.currentTarget.style.boxShadow = '0 2px 10px rgba(255,90,31,.28)';
                   }}
@@ -331,12 +331,12 @@ export default function DevicePairingPage() {
                   onClick={() => setShowDemoWarning(false)}
                   className="w-full h-10 rounded-full font-medium text-[13px] transition-all"
                   style={{
-                    border: '1px solid hsl(var(--rule))',
-                    color: 'hsl(var(--ink))',
+                    border: '2px solid #FF5A1F',
+                    color: '#FF5A1F',
                     background: 'transparent'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'hsl(var(--bg-3))';
+                    e.currentTarget.style.background = 'rgba(255,90,31,0.1)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent';
