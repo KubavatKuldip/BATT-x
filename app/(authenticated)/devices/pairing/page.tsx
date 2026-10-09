@@ -36,10 +36,6 @@ export default function DevicePairingPage() {
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [showDemoWarning, setShowDemoWarning] = useState(false);
 
-  // Demo mode detection
-  const [isDemoMode, setIsDemoMode] = useState(false);
-  const [showDemoWarning, setShowDemoWarning] = useState(false);
-
   useEffect(() => {
     // Check if in demo mode
     const urlParams = new URLSearchParams(window.location.search);
