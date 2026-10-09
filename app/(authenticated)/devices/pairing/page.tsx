@@ -244,13 +244,14 @@ export default function DevicePairingPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-8" style={{ background: 'hsl(var(--bg))' }}>
       {/* Demo Mode Warning Modal */}
-      {showDemoWarning && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(4px)' }}
-          onClick={() => setShowDemoWarning(false)}
-        >
-          <motion.div
+      <AnimatePresence>
+        {showDemoWarning && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setShowDemoWarning(false)}
+          >
+            <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
@@ -348,6 +349,7 @@ export default function DevicePairingPage() {
           </motion.div>
         </div>
       )}
+      </AnimatePresence>
 
       <div className="w-full max-w-md">
         <AnimatePresence mode="wait">

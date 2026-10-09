@@ -42,8 +42,15 @@ export default function DevicesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
+    // Check if in demo mode
+    const urlParams = new URLSearchParams(window.location.search);
+    const demoParam = urlParams.get('demo') === 'true';
+    const demoStorage = sessionStorage.getItem('battx_demo_mode') === 'true';
+    setIsDemoMode(demoParam || demoStorage);
+
     fetchDevices();
   }, []);
 
@@ -192,7 +199,7 @@ export default function DevicesPage() {
                 Your paired <em className="font-serif italic font-normal" style={{ color: 'hsl(var(--accent))' }}>devices.</em>
               </h2>
               <Button
-                onClick={() => router.push('/devices/pairing')}
+                onClick={() => router.push(isDemoMode ? '/devices/pairing?demo=true' : '/devices/pairing')}
                 className="gap-2 font-mono text-[12px]"
               >
                 <Plus className="w-4 h-4" />
@@ -213,7 +220,7 @@ export default function DevicesPage() {
             </div>
             <Button
               size="lg"
-              onClick={() => router.push('/devices/pairing')}
+              onClick={() => router.push(isDemoMode ? '/devices/pairing?demo=true' : '/devices/pairing')}
               className="gap-2"
             >
               <Plus className="w-5 h-5" />
