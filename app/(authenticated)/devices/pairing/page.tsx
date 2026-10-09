@@ -32,6 +32,22 @@ export default function DevicePairingPage() {
   const [manualSerial, setManualSerial] = useState("");
   const [manualVehicleType, setManualVehicleType] = useState<"TWO_WHEELER" | "THREE_WHEELER" | "FOUR_WHEELER">("TWO_WHEELER");
 
+  // Demo mode detection
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [showDemoWarning, setShowDemoWarning] = useState(false);
+
+  // Demo mode detection
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [showDemoWarning, setShowDemoWarning] = useState(false);
+
+  useEffect(() => {
+    // Check if in demo mode
+    const urlParams = new URLSearchParams(window.location.search);
+    const demoParam = urlParams.get('demo') === 'true';
+    const demoStorage = sessionStorage.getItem('battx_demo_mode') === 'true';
+    setIsDemoMode(demoParam || demoStorage);
+  }, []);
+
   useEffect(() => {
     return () => {
       // Cleanup scanner on unmount
@@ -42,6 +58,12 @@ export default function DevicePairingPage() {
   }, [isScanning]);
 
   const startScanning = async () => {
+    // Check demo mode first
+    if (isDemoMode) {
+      setShowDemoWarning(true);
+      return;
+    }
+
     try {
       setScanError(null);
       setIsScanning(true);
@@ -113,6 +135,12 @@ export default function DevicePairingPage() {
   const handlePairDevice = async () => {
     if (!deviceData) return;
 
+    // Check demo mode first
+    if (isDemoMode) {
+      setShowDemoWarning(true);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -164,6 +192,12 @@ export default function DevicePairingPage() {
   };
 
   const handleManualPair = async () => {
+    // Check demo mode first
+    if (isDemoMode) {
+      setShowDemoWarning(true);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -213,6 +247,112 @@ export default function DevicePairingPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-8" style={{ background: 'hsl(var(--bg))' }}>
+      {/* Demo Mode Warning Modal */}
+      {showDemoWarning && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setShowDemoWarning(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="paper-surface rounded-xl border-2 p-8 max-w-md w-full shadow-2xl"
+            style={{
+              borderColor: 'var(--ember)',
+              background: 'hsl(var(--paper))'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center">
+              <div className="mb-6 flex justify-center">
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center"
+                  style={{ background: 'var(--ember-soft)' }}
+                >
+                  <AlertCircle className="w-8 h-8" style={{ color: 'var(--ember)' }} />
+                </div>
+              </div>
+
+              <h2
+                className="text-[24px] font-semibold mb-3"
+                style={{ fontFamily: 'var(--font-display)', color: 'hsl(var(--ink))' }}
+              >
+                Device Pairing Not Available
+              </h2>
+
+              <div className="space-y-3 mb-6">
+                <p className="text-[15px] leading-relaxed" style={{ color: 'hsl(var(--ink-2))' }}>
+                  You cannot pair devices in <strong style={{ color: 'var(--ember)' }}>Demo Mode</strong>.
+                </p>
+                <p className="text-[15px] leading-relaxed" style={{ color: 'hsl(var(--ink-2))' }}>
+                  Demo mode is designed for evaluators to explore the platform with simulated data only.
+                </p>
+                <div
+                  className="p-4 rounded-lg text-left"
+                  style={{ background: 'var(--ember-soft)', borderLeft: '3px solid var(--ember)' }}
+                >
+                  <p className="text-[14px] font-semibold mb-2" style={{ color: 'var(--ember-2)' }}>
+                    To pair a real device:
+                  </p>
+                  <ol className="text-[13px] space-y-1.5 ml-4" style={{ color: 'hsl(var(--ink-2))', listStyle: 'decimal' }}>
+                    <li>Exit demo mode (click "Exit Demo" button in navbar)</li>
+                    <li>Register a new account or sign in as a legitimate user</li>
+                    <li>Return to this page to pair your BATT-X device</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    sessionStorage.removeItem('battx_demo_mode');
+                    window.location.href = '/auth/signup';
+                  }}
+                  className="w-full h-12 rounded-full font-medium text-[14px] transition-all"
+                  style={{
+                    background: 'var(--ember)',
+                    color: '#fff',
+                    boxShadow: '0 2px 10px rgba(255,90,31,.28)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--ember-2)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 22px rgba(255,90,31,.36)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'var(--ember)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 10px rgba(255,90,31,.28)';
+                  }}
+                >
+                  Create Account & Pair Device
+                </button>
+
+                <button
+                  onClick={() => setShowDemoWarning(false)}
+                  className="w-full h-10 rounded-full font-medium text-[13px] transition-all"
+                  style={{
+                    border: '1px solid hsl(var(--rule))',
+                    color: 'hsl(var(--ink-2))',
+                    background: 'transparent'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'hsl(var(--bg-3))';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  Continue Exploring Demo
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       <div className="w-full max-w-md">
         <AnimatePresence mode="wait">
           {/* STEP 1: SCAN QR CODE */}
@@ -230,6 +370,53 @@ export default function DevicePairingPage() {
                     Scan the QR code on your BATT-X device to pair it
                   </p>
                 </div>
+
+                {/* Demo Mode Warning Banner */}
+                {isDemoMode && (
+                  <div
+                    className="mb-6 p-5 rounded-xl border-2 animate-pulse"
+                    style={{
+                      background: 'var(--ember-soft)',
+                      borderColor: 'var(--ember)',
+                      animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                    }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-6 h-6 shrink-0 mt-0.5" style={{ color: 'var(--ember)' }} />
+                      <div>
+                        <p className="font-semibold text-[15px] mb-2" style={{ color: 'var(--ember-2)' }}>
+                          ⚠️ Device Pairing Not Available in Demo Mode
+                        </p>
+                        <p className="text-[13px] leading-relaxed mb-3" style={{ color: 'hsl(var(--ink-2))' }}>
+                          You are currently in <strong>Demo Mode</strong>. Device pairing is disabled for evaluators.
+                          To pair a real BATT-X device, you must register and sign in as a legitimate user.
+                        </p>
+                        <button
+                          onClick={() => {
+                            sessionStorage.removeItem('battx_demo_mode');
+                            window.location.href = '/auth/signup';
+                          }}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium transition-all"
+                          style={{
+                            background: 'var(--ember)',
+                            color: '#fff',
+                            boxShadow: '0 2px 8px rgba(255,90,31,.25)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'var(--ember-2)';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'var(--ember)';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
+                        >
+                          Create Account to Pair Device →
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-5">
                   {/* QR Scanner Container */}
