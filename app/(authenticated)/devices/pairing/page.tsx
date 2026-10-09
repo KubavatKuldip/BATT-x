@@ -332,7 +332,7 @@ export default function DevicePairingPage() {
                   className="w-full h-10 rounded-full font-medium text-[13px] transition-all"
                   style={{
                     border: '1px solid hsl(var(--rule))',
-                    color: 'hsl(var(--ink-2))',
+                    color: 'hsl(var(--ink))',
                     background: 'transparent'
                   }}
                   onMouseEnter={(e) => {
