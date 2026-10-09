@@ -5,12 +5,22 @@ import { StatusHeader } from "@/components/dashboard/status-header";
 import { SensorCard } from "@/components/dashboard/sensor-card";
 import { BatteryCard } from "@/components/dashboard/battery-card";
 import { Button } from "@/components/ui/button";
-import { Thermometer, Wind, Zap, Activity, RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { Thermometer, Wind, Zap, Activity, RefreshCw, Wifi, WifiOff, Play, Pause, RotateCcw } from "lucide-react";
 import { useDashboardStore } from "@/lib/stores/dashboard-store";
 import { useSocket } from "@/hooks/use-socket";
 import { toast } from "@/hooks/use-toast";
 import { useTranslations } from 'next-intl';
 import type { SensorData, DeviceStatus } from "@/lib/types";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 
 // Simulated sensor data for demonstration (fallback when no real device)
 const generateMockSensorData = (): SensorData => {
@@ -48,6 +58,15 @@ const getSensorStatus = (value: number, max: number, critical: number): 'normal'
   return 'normal';
 };
 
+// Scenario simulation types
+type SimulationScenario = 'normal' | 'warning' | 'critical' | 'recovery';
+
+interface SimulationState {
+  active: boolean;
+  scenario: SimulationScenario;
+  step: number;
+}
+
 export default function DashboardPage() {
   const t = useTranslations('dashboard');
   const {
@@ -69,6 +88,16 @@ export default function DashboardPage() {
   const [dataSource, setDataSource] = useState<'real' | 'demo'>('demo');
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Chart history state (last 20 readings)
+  const [sensorHistory, setSensorHistory] = useState<Array<SensorData & { time: string }>>([]);
+
+  // Simulation state
+  const [simulation, setSimulation] = useState<SimulationState>({
+    active: false,
+    scenario: 'normal',
+    step: 0,
+  });
+
   // Use Socket.io hook for real-time updates
   // If no real device, subscribe to "demo-device-1" to receive server demo emissions
   const effectiveDeviceId = realDeviceId || (process.env.NEXT_PUBLIC_SOCKET_URL ? 'demo-device-1' : null);
@@ -83,6 +112,13 @@ export default function DashboardPage() {
       setLastSync(new Date());
       setConnectionStatus('connected');
       setDataSource(realDeviceId ? 'real' : 'demo');
+
+      // Add to history
+      const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      setSensorHistory(prev => {
+        const updated = [...prev, { ...socketData, time: timeStr }];
+        return updated.slice(-20); // Keep last 20 readings
+      });
 
       // Clear polling if socket is working
       if (pollIntervalRef.current) {
@@ -110,6 +146,17 @@ export default function DashboardPage() {
   // Fetch user's active device on mount
   useEffect(() => {
     const fetchActiveDevice = async () => {
+      // NEW: Check if user came from evaluators card (demo mode)
+      const isDemoMode = typeof window !== 'undefined' && sessionStorage.getItem('battx_demo_mode') === 'true';
+
+      if (isDemoMode) {
+        // Demo mode: show simulated data immediately
+        console.log('Demo mode active - showing simulated data');
+        startDemoMode();
+        return;
+      }
+
+      // Real user flow: try to fetch paired devices
       try {
         const response = await fetch("/api/devices");
         if (response.ok) {
@@ -126,25 +173,23 @@ export default function DashboardPage() {
               const readingData = await readingResponse.json();
               if (readingData.reading) {
                 const r = readingData.reading;
-                setSensorData({
+                const newData = {
                   temperature: r.temperature,
                   gasLevel: r.gasLevel,
                   voltage: r.voltage,
                   current: r.current,
                   batteryPercent: r.batteryPercent,
                   timestamp: new Date(r.timestamp),
-                });
-                setDeviceStatus(getDeviceStatus({
-                  temperature: r.temperature,
-                  gasLevel: r.gasLevel,
-                  voltage: r.voltage,
-                  current: r.current,
-                  batteryPercent: r.batteryPercent,
-                  timestamp: new Date(r.timestamp),
-                }));
+                };
+                setSensorData(newData);
+                setDeviceStatus(getDeviceStatus(newData));
                 setDataSource('real');
                 setConnectionStatus('connected');
                 setLastSync(new Date());
+
+                // Initialize history
+                const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+                setSensorHistory([{ ...newData, time: timeStr }]);
               }
             }
 
@@ -157,13 +202,21 @@ export default function DashboardPage() {
               }
             }, 2000); // Give Socket.io 2 seconds to connect
           } else {
-            // No real device, use demo data
-            startDemoMode();
+            // No real device paired - show "nothing" state
+            setDataSource('real');
+            setConnectionStatus('disconnected');
           }
+        } else {
+          // API error - for real users, show empty state (nothing until device paired)
+          console.log('API /api/devices returned error - showing empty state for real user');
+          setDataSource('real');
+          setConnectionStatus('disconnected');
         }
       } catch (error) {
-        console.error("Failed to fetch devices, falling back to demo:", error);
-        startDemoMode();
+        console.error("Failed to fetch devices:", error);
+        // For real users, show empty state
+        setDataSource('real');
+        setConnectionStatus('disconnected');
       }
     };
 
@@ -186,6 +239,13 @@ export default function DashboardPage() {
       const status = getDeviceStatus(newData);
       setDeviceStatus(status);
 
+      // Add to history
+      const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      setSensorHistory(prev => {
+        const updated = [...prev, { ...newData, time: timeStr }];
+        return updated.slice(-20);
+      });
+
       if (status === 'warning') {
         setGracePeriod(30);
       } else {
@@ -205,6 +265,8 @@ export default function DashboardPage() {
     const initialData = generateMockSensorData();
     setSensorData(initialData);
     setDeviceStatus(getDeviceStatus(initialData));
+    const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    setSensorHistory([{ ...initialData, time: timeStr }]);
 
     // Save interval for cleanup
     pollIntervalRef.current = interval;
@@ -232,6 +294,13 @@ export default function DashboardPage() {
             setDeviceStatus(getDeviceStatus(newData));
             setLastSync(new Date());
             setConnectionStatus('connected');
+
+            // Add to history
+            const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            setSensorHistory(prev => {
+              const updated = [...prev, { ...newData, time: timeStr }];
+              return updated.slice(-20);
+            });
           }
         }
       } catch (error) {
@@ -251,23 +320,24 @@ export default function DashboardPage() {
           const data = await response.json();
           if (data.reading) {
             const r = data.reading;
-            setSensorData({
+            const newData = {
               temperature: r.temperature,
               gasLevel: r.gasLevel,
               voltage: r.voltage,
               current: r.current,
               batteryPercent: r.batteryPercent,
               timestamp: new Date(r.timestamp),
-            });
-            setDeviceStatus(getDeviceStatus({
-              temperature: r.temperature,
-              gasLevel: r.gasLevel,
-              voltage: r.voltage,
-              current: r.current,
-              batteryPercent: r.batteryPercent,
-              timestamp: new Date(r.timestamp),
-            }));
+            };
+            setSensorData(newData);
+            setDeviceStatus(getDeviceStatus(newData));
             setLastSync(new Date());
+
+            // Add to history
+            const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            setSensorHistory(prev => {
+              const updated = [...prev, { ...newData, time: timeStr }];
+              return updated.slice(-20);
+            });
           }
         }
       } catch (error) {
@@ -281,6 +351,13 @@ export default function DashboardPage() {
       const newData = generateMockSensorData();
       setSensorData(newData);
       setDeviceStatus(getDeviceStatus(newData));
+
+      // Add to history
+      const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      setSensorHistory(prev => {
+        const updated = [...prev, { ...newData, time: timeStr }];
+        return updated.slice(-20);
+      });
     }
 
     setIsRefreshing(false);
@@ -289,6 +366,117 @@ export default function DashboardPage() {
       title: `✓ ${t('synced')}`,
       description: dataSource === 'real' ? "Latest sensor data from device" : "Demo data refreshed",
     });
+  };
+
+  // Scenario simulation logic
+  const runSimulationStep = (scenario: SimulationScenario, step: number): SensorData => {
+    const baseData = sensorData || generateMockSensorData();
+
+    switch (scenario) {
+      case 'normal':
+        return {
+          temperature: 40 + Math.random() * 10,
+          gasLevel: Math.random() * 20,
+          voltage: 50 + Math.random() * 2,
+          current: 5 + Math.random() * 5,
+          batteryPercent: 70 + Math.random() * 25,
+          timestamp: new Date(),
+        };
+      case 'warning':
+        return {
+          temperature: 56 + Math.random() * 4,
+          gasLevel: 62 + Math.random() * 10,
+          voltage: 52 + Math.random() * 1.5,
+          current: 12 + Math.random() * 5,
+          batteryPercent: 50 + Math.random() * 30,
+          timestamp: new Date(),
+        };
+      case 'critical':
+        return {
+          temperature: 66 + Math.random() * 5,
+          gasLevel: 82 + Math.random() * 10,
+          voltage: 54.5 + Math.random() * 2,
+          current: 18 + Math.random() * 8,
+          batteryPercent: 30 + Math.random() * 40,
+          timestamp: new Date(),
+        };
+      case 'recovery':
+        const progress = step / 10;
+        return {
+          temperature: 66 - progress * 26,
+          gasLevel: 82 - progress * 62,
+          voltage: 54 - progress * 2,
+          current: 20 - progress * 15,
+          batteryPercent: 40 + progress * 40,
+          timestamp: new Date(),
+        };
+      default:
+        return baseData;
+    }
+  };
+
+  const startSimulation = (scenario: SimulationScenario) => {
+    if (simulation.active) {
+      stopSimulation();
+    }
+
+    setSimulation({ active: true, scenario, step: 0 });
+
+    toast({
+      title: `Simulation Started: ${scenario.toUpperCase()}`,
+      description: `Running ${scenario} scenario simulation`,
+    });
+
+    // Clear existing interval
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+    }
+
+    let step = 0;
+    const interval = setInterval(() => {
+      step++;
+      const newData = runSimulationStep(scenario, step);
+      setSensorData(newData);
+      setDeviceStatus(getDeviceStatus(newData));
+
+      // Add to history
+      const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      setSensorHistory(prev => {
+        const updated = [...prev, { ...newData, time: timeStr }];
+        return updated.slice(-20);
+      });
+
+      setSimulation(prev => ({ ...prev, step }));
+
+      // Auto-stop after 20 steps
+      if (step >= 20) {
+        clearInterval(interval);
+        setSimulation({ active: false, scenario: 'normal', step: 0 });
+        toast({
+          title: "Simulation Complete",
+          description: "Returning to live data",
+        });
+        startDemoMode(); // Resume normal demo mode
+      }
+    }, 2000);
+
+    pollIntervalRef.current = interval;
+  };
+
+  const stopSimulation = () => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+    }
+    setSimulation({ active: false, scenario: 'normal', step: 0 });
+    toast({
+      title: "Simulation Stopped",
+      description: "Returning to live data",
+    });
+    startDemoMode();
+  };
+
+  const autoStartSimulation = () => {
+    startSimulation('warning');
   };
 
   // Show empty state when no device is paired instead of infinite redirect
@@ -457,6 +645,313 @@ export default function DashboardPage() {
           gracePeriodSeconds={gracePeriodSeconds}
           lastSyncAt={lastSyncAt}
         />
+
+        {/* Sensor History Charts */}
+        {sensorHistory.length > 1 && (
+          <section className="mt-16">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-10 items-end pb-7 border-b border-rule mb-12">
+              <div className="space-y-3.5">
+                <div className="eyebrow">04 — Sensor trends</div>
+                <div className="font-mono text-[11px] text-ink-4 tracking-wide uppercase">
+                  LAST {sensorHistory.length} READINGS
+                </div>
+              </div>
+              <div>
+                <h2 className="h-section">
+                  How readings <em className="font-serif italic font-normal" style={{ color: 'hsl(var(--accent))' }}>evolve.</em>
+                </h2>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Temperature Chart */}
+              <div className="paper-surface rounded-lg p-6">
+                <h3 className="font-medium text-[17px] mb-1">Temperature History</h3>
+                <p className="text-[12px] text-ink-3 mb-6 font-mono uppercase tracking-wide">°C over time</p>
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={sensorHistory}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--rule))" />
+                    <XAxis
+                      dataKey="time"
+                      stroke="hsl(var(--ink-3))"
+                      style={{ fontSize: '10px', fontFamily: 'var(--font-mono)' }}
+                    />
+                    <YAxis
+                      stroke="hsl(var(--ink-3))"
+                      style={{ fontSize: '10px', fontFamily: 'var(--font-mono)' }}
+                      domain={[30, 70]}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'hsl(var(--paper))',
+                        border: '1px solid hsl(var(--rule))',
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="temperature"
+                      stroke="hsl(var(--danger))"
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(var(--danger))', r: 3 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Gas Level Chart */}
+              <div className="paper-surface rounded-lg p-6">
+                <h3 className="font-medium text-[17px] mb-1">Gas Level History</h3>
+                <p className="text-[12px] text-ink-3 mb-6 font-mono uppercase tracking-wide">ppm over time</p>
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={sensorHistory}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--rule))" />
+                    <XAxis
+                      dataKey="time"
+                      stroke="hsl(var(--ink-3))"
+                      style={{ fontSize: '10px', fontFamily: 'var(--font-mono)' }}
+                    />
+                    <YAxis
+                      stroke="hsl(var(--ink-3))"
+                      style={{ fontSize: '10px', fontFamily: 'var(--font-mono)' }}
+                      domain={[0, 100]}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'hsl(var(--paper))',
+                        border: '1px solid hsl(var(--rule))',
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="gasLevel"
+                      stroke="hsl(var(--warn))"
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(var(--warn))', r: 3 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Voltage Chart */}
+              <div className="paper-surface rounded-lg p-6">
+                <h3 className="font-medium text-[17px] mb-1">Voltage History</h3>
+                <p className="text-[12px] text-ink-3 mb-6 font-mono uppercase tracking-wide">V over time</p>
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={sensorHistory}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--rule))" />
+                    <XAxis
+                      dataKey="time"
+                      stroke="hsl(var(--ink-3))"
+                      style={{ fontSize: '10px', fontFamily: 'var(--font-mono)' }}
+                    />
+                    <YAxis
+                      stroke="hsl(var(--ink-3))"
+                      style={{ fontSize: '10px', fontFamily: 'var(--font-mono)' }}
+                      domain={[40, 60]}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'hsl(var(--paper))',
+                        border: '1px solid hsl(var(--rule))',
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="voltage"
+                      stroke="hsl(var(--accent))"
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(var(--accent))', r: 3 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Current Chart */}
+              <div className="paper-surface rounded-lg p-6">
+                <h3 className="font-medium text-[17px] mb-1">Current History</h3>
+                <p className="text-[12px] text-ink-3 mb-6 font-mono uppercase tracking-wide">A over time</p>
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={sensorHistory}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--rule))" />
+                    <XAxis
+                      dataKey="time"
+                      stroke="hsl(var(--ink-3))"
+                      style={{ fontSize: '10px', fontFamily: 'var(--font-mono)' }}
+                    />
+                    <YAxis
+                      stroke="hsl(var(--ink-3))"
+                      style={{ fontSize: '10px', fontFamily: 'var(--font-mono)' }}
+                      domain={[0, 20]}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'hsl(var(--paper))',
+                        border: '1px solid hsl(var(--rule))',
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="current"
+                      stroke="hsl(156 35% 56%)"
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(156 35% 56%)', r: 3 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Scenario Controls */}
+        <section className="mt-16">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-10 items-end pb-7 border-b border-rule mb-12">
+            <div className="space-y-3.5">
+              <div className="eyebrow">05 — Test scenarios</div>
+              <div className="font-mono text-[11px] text-ink-4 tracking-wide uppercase">
+                SIMULATE CONDITIONS
+              </div>
+            </div>
+            <div>
+              <h2 className="h-section">
+                Test how the system <em className="font-serif italic font-normal" style={{ color: 'hsl(var(--accent))' }}>responds.</em>
+              </h2>
+            </div>
+          </div>
+
+          <div className="paper-surface rounded-lg p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              {/* Normal Scenario */}
+              <div className="border border-rule rounded-lg p-5" style={{ background: 'hsl(var(--bg-alt))' }}>
+                <h4 className="font-medium text-[15px] mb-2">Normal Operation</h4>
+                <p className="text-[13px] text-ink-3 mb-4 leading-relaxed">
+                  All sensors within safe range. Typical daily usage pattern.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => startSimulation('normal')}
+                  disabled={simulation.active}
+                  className="w-full gap-2"
+                >
+                  <Play className="w-3.5 h-3.5" />
+                  Run Normal
+                </Button>
+              </div>
+
+              {/* Warning Scenario */}
+              <div className="border border-rule rounded-lg p-5" style={{ background: 'hsl(var(--bg-alt))' }}>
+                <h4 className="font-medium text-[15px] mb-2">Warning State</h4>
+                <p className="text-[13px] text-ink-3 mb-4 leading-relaxed">
+                  Temperature and gas approaching warning thresholds.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => startSimulation('warning')}
+                  disabled={simulation.active}
+                  className="w-full gap-2"
+                  style={{
+                    borderColor: 'hsl(var(--warn))',
+                    color: 'hsl(var(--warn))'
+                  }}
+                >
+                  <Play className="w-3.5 h-3.5" />
+                  Run Warning
+                </Button>
+              </div>
+
+              {/* Critical Scenario */}
+              <div className="border border-rule rounded-lg p-5" style={{ background: 'hsl(var(--bg-alt))' }}>
+                <h4 className="font-medium text-[15px] mb-2">Critical Event</h4>
+                <p className="text-[13px] text-ink-3 mb-4 leading-relaxed">
+                  All sensors exceed safe limits. Triggers cutoff protocol.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => startSimulation('critical')}
+                  disabled={simulation.active}
+                  className="w-full gap-2"
+                  style={{
+                    borderColor: 'hsl(var(--danger))',
+                    color: 'hsl(var(--danger))'
+                  }}
+                >
+                  <Play className="w-3.5 h-3.5" />
+                  Run Critical
+                </Button>
+              </div>
+
+              {/* Recovery Scenario */}
+              <div className="border border-rule rounded-lg p-5" style={{ background: 'hsl(var(--bg-alt))' }}>
+                <h4 className="font-medium text-[15px] mb-2">Recovery Mode</h4>
+                <p className="text-[13px] text-ink-3 mb-4 leading-relaxed">
+                  Gradual cooldown from critical state back to normal.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => startSimulation('recovery')}
+                  disabled={simulation.active}
+                  className="w-full gap-2"
+                  style={{
+                    borderColor: 'hsl(var(--ok))',
+                    color: 'hsl(var(--ok))'
+                  }}
+                >
+                  <Play className="w-3.5 h-3.5" />
+                  Run Recovery
+                </Button>
+              </div>
+            </div>
+
+            {/* Auto-Start and Control Buttons */}
+            <div className="flex flex-wrap gap-4 pt-6 border-t border-rule">
+              <Button
+                onClick={autoStartSimulation}
+                disabled={simulation.active}
+                className="gap-2 font-mono text-[12px]"
+                style={{
+                  background: 'linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent-deep)) 100%)',
+                  color: '#fff',
+                  boxShadow: '0 4px 14px hsl(var(--accent) / 0.3)',
+                  border: 'none',
+                }}
+              >
+                <Play className="w-4 h-4" />
+                Auto-Start Demo Simulation
+              </Button>
+
+              {simulation.active && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={stopSimulation}
+                    className="gap-2 font-mono text-[12px]"
+                  >
+                    <Pause className="w-4 h-4" />
+                    Stop
+                  </Button>
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-md border border-rule" style={{ background: 'hsl(var(--paper))' }}>
+                    <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                    <span className="font-mono text-[11px] uppercase tracking-wide">
+                      {simulation.scenario} · Step {simulation.step}/20
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
 
         {/* How It Works Section */}
         <section className="mt-16">

@@ -32,8 +32,17 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  // If user is not authenticated and tries to access protected route, redirect to login
+  // Check for demo mode parameter
+  const isDemoMode = req.nextUrl.searchParams.get("demo") === "true";
+
+  // If user is not authenticated and tries to access protected route
   if (!isAuthenticated && isAuthenticatedRoute) {
+    // Allow demo mode access to ALL authenticated sections
+    if (isDemoMode) {
+      return NextResponse.next();
+    }
+
+    // Otherwise redirect to login
     const signInUrl = new URL("/auth/signin", req.url);
     signInUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(signInUrl);

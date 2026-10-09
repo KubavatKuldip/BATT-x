@@ -7,37 +7,53 @@
 
 @layer base {
   :root {
-    /* Paper theme (light) - Editorial design */
-    --bg: 38 33% 96%; /* #f7f4ed - warm paper */
-    --bg-alt: 38 30% 94%; /* #efeae0 - slightly darker paper */
+    /* Reference UI color scheme - Warm paper/ember palette */
+    --bg: 38 33% 96%; /* #F7F4EF - warm paper */
+    --bg-alt: 38 30% 94%; /* #EFEAE2 - slightly darker paper */
+    --bg-2: 0 0% 100%; /* #FFFFFF - white */
+    --bg-3: 38 25% 94%; /* #EFEAE2 */
+    --bg-4: 38 22% 87%; /* #E6DFD4 */
     --bg-deep: 30 7% 10%; /* #1a1a17 - deep ink */
 
-    --ink: 30 7% 10%; /* #1a1a17 - primary text */
-    --ink-2: 30 7% 22%; /* #3a3a35 - secondary text */
-    --ink-3: 30 6% 40%; /* #66665e - tertiary text */
+    --ink: 222 7% 10%; /* #15161A - primary text */
+    --ink-2: 222 7% 30%; /* #4C5058 - secondary text */
+    --ink-3: 222 6% 55%; /* #7E838C - tertiary text */
     --ink-4: 30 5% 60%; /* #9a9a90 - muted text */
 
-    --rule: 38 20% 83%; /* #d9d3c4 - divider lines */
-    --rule-soft: 38 25% 88%; /* #e6e0d1 - soft dividers */
+    --line: 38 28% 82%; /* #E2DACF - divider lines */
+    --line-2: 38 26% 77%; /* #D3C9BB - stronger dividers */
+    --rule: 38 28% 82%; /* alias for line */
+    --rule-soft: 38 25% 88%; /* soft dividers */
 
-    --paper: 48 100% 99%; /* #fffdf7 - card surface */
+    --paper: 48 100% 99%; /* #FFFFFF - card surface */
 
-    --accent: 156 42% 20%; /* #1f4634 - forest green */
-    --accent-deep: 156 42% 14%; /* #15311f - deeper green */
-    --accent-soft: 156 23% 91%; /* #e4ebe5 - soft green bg */
-    --accent-ink: 38 33% 96%; /* text on accent */
+    /* Reference color scheme - Ember as primary */
+    --ember: 14 100% 56%; /* #FF5A1F - ember orange */
+    --ember-2: 14 92% 47%; /* #E0450C - deeper ember */
+    --ember-soft: 14 100% 95%; /* #FFEDE5 - soft ember bg */
+    --teal: 177 81% 31%; /* #0E8F8A */
+    --teal-soft: 177 47% 92%; /* #E1F4F2 */
+    --violet: 250 68% 59%; /* #6D4AE0 */
 
-    --danger: 10 55% 36%; /* #8a3a2a - warning red */
-    --danger-soft: 10 33% 91%; /* #f2e4e0 - soft red bg */
+    --accent: 14 100% 56%; /* #FF5A1F - ember */
+    --accent-deep: 14 92% 47%; /* #E0450C - deeper ember */
+    --accent-soft: 14 100% 95%; /* #FFEDE5 - soft ember bg */
+    --accent-ink: 0 0% 100%; /* white text on accent */
 
-    --warn: 30 74% 38%; /* #a66a1a - amber warning */
-    --warn-soft: 38 60% 90%; /* #f3ead8 - soft amber bg */
+    --danger: 0 68% 49%; /* #CE2A2A - critical red */
+    --danger-soft: 0 76% 96%; /* #FCE9E9 - soft red bg */
+    --crit: 0 68% 49%; /* alias */
+    --crit-soft: 0 76% 96%; /* alias */
 
-    --ok: 156 42% 20%; /* #1f4634 - same as accent */
-    --ok-soft: 156 23% 91%; /* #e4ebe5 - soft green bg */
+    --warn: 38 100% 39%; /* #C47900 - amber warning */
+    --warn-soft: 43 82% 92%; /* #FBF0DA - soft amber bg */
 
-    --shadow: 0 6px 20px rgba(26, 26, 23, 0.06);
-    --shadow-lg: 0 24px 60px rgba(26, 26, 23, 0.08);
+    --ok: 156 68% 31%; /* #16875A - green */
+    --ok-soft: 156 60% 93%; /* #E2F4EC - soft green bg */
+
+    --shadow: 0 1px 2px rgba(30,22,12,.06), 0 2px 8px rgba(30,22,12,.04);
+    --shadow-m: 0 2px 6px rgba(30,22,12,.06), 0 12px 32px rgba(30,22,12,.08);
+    --shadow-lg: 0 8px 24px rgba(30,22,12,.09), 0 32px 72px rgba(30,22,12,.12);
 
     /* Legacy mappings for existing components */
     --background: var(--bg);
