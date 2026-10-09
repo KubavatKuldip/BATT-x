@@ -396,16 +396,16 @@ export default function DevicePairingPage() {
                           }}
                           className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium transition-all"
                           style={{
-                            background: 'var(--ember)',
-                            color: '#fff',
+                            background: '#FF5A1F',
+                            color: '#ffffff',
                             boxShadow: '0 2px 8px rgba(255,90,31,.25)'
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'var(--ember-2)';
+                            e.currentTarget.style.background = '#ff6b33';
                             e.currentTarget.style.transform = 'translateY(-1px)';
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'var(--ember)';
+                            e.currentTarget.style.background = '#FF5A1F';
                             e.currentTarget.style.transform = 'translateY(0)';
                           }}
                         >
