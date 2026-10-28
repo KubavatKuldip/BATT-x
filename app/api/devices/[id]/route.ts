@@ -126,6 +126,9 @@ export async function DELETE(
       );
     }
 
+    // Get serial number before deletion
+    const serialNumber = device.serialNumber;
+
     await prisma.device.delete({
       where: { id },
     });
@@ -135,11 +138,15 @@ export async function DELETE(
       data: {
         userId: user.id,
         action: "device_unpaired",
-        details: { deviceId: device.id, serialNumber: device.serialNumber },
+        details: { deviceId: device.id, serialNumber: serialNumber },
       },
     });
 
-    return NextResponse.json({ message: "Device unpaired successfully" });
+    // Return serial number so ESP32 can verify re-pairing
+    return NextResponse.json({
+      message: "Device unpaired successfully",
+      serialNumber,
+    });
   } catch (error) {
     return handleApiError(error);
   }
