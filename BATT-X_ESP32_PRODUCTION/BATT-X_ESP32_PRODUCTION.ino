@@ -94,8 +94,8 @@
 
 // ==================== CONFIGURATION ====================
 // Safety thresholds
-#define TEMP_WARNING_C      50.0   // °C - warning threshold
-#define TEMP_CRITICAL_C     60.0   // °C - critical threshold
+#define TEMP_WARNING_C      35.0   // °C - warning threshold
+#define TEMP_CRITICAL_C     40.0   // °C - critical threshold
 #define GAS_WARNING_ADC     1200   // Raw ADC value from MQ-2 divider
 #define GAS_CRITICAL_ADC    2000
 #define CURRENT_WARNING_A   20.0   // A - overcurrent warning
@@ -141,7 +141,7 @@
 #define PAIRING_RETRY_MS    10000  // 10 seconds between claim attempts
 
 // Sensor upload interval
-#define SENSOR_UPLOAD_MS    5000   // 5 seconds
+#define SENSOR_UPLOAD_MS    1500   // 5 seconds
 
 // Consecutive 404 errors before automatic re-pair
 #define MAX_404_BEFORE_REPAIRE 3
@@ -214,7 +214,7 @@ static const uint8_t HMAC_KEY[32] = {
 // because the encryption keys are demonstration values only.
 //
 // Enable logging only if you have provisioned secure per-device keys.
-#define ENABLE_SD_LOGGING false  // Set to true only with secure keys
+#define ENABLE_SD_LOGGING true  // Set to true only with secure keys
 
 // ==================== GLOBAL OBJECTS ====================
 OneWire oneWire(ONE_WIRE_BUS);
@@ -636,7 +636,14 @@ void runStateMachine(float temp, int gas, float current) {
 
   switch (currentState) {
     case STATE_NORMAL:
-      if (dangerPresent) {
+      if (criticalDanger) {
+        // IMMEDIATE CUTOFF for critical danger (temperature >= 40°C, gas >= 2000, current >= 30A)
+        currentState = STATE_CUTOFF;
+        dangerReason = currentReason;
+        Serial.printf("STATE: IMMEDIATE CUTOFF - Reason: %s\n", dangerReason.c_str());
+        executeCutoff();
+      } else if (dangerPresent) {
+        // Warning state for non-critical danger
         currentState = STATE_WARNING;
         warningStartTime = millis();
         dangerReason = currentReason;
@@ -646,6 +653,15 @@ void runStateMachine(float temp, int gas, float current) {
       break;
 
     case STATE_WARNING:
+      // If danger becomes critical, go to cutoff immediately
+      if (criticalDanger) {
+        currentState = STATE_CUTOFF;
+        dangerReason = currentReason;
+        Serial.printf("STATE: CUTOFF (warning turned critical) - Reason: %s\n", dangerReason.c_str());
+        executeCutoff();
+        break;
+      }
+
       // Stay in warning for 5 seconds, then move to grace period
       if (millis() - warningStartTime > 5000) {
         currentState = STATE_GRACE_PERIOD;
@@ -667,12 +683,21 @@ void runStateMachine(float temp, int gas, float current) {
       break;
 
     case STATE_GRACE_PERIOD:
+      // If danger becomes critical, cutoff immediately
+      if (criticalDanger) {
+        currentState = STATE_CUTOFF;
+        dangerReason = currentReason;
+        Serial.printf("STATE: CUTOFF (grace turned critical) - Reason: %s\n", dangerReason.c_str());
+        executeCutoff();
+        break;
+      }
+
       // Re-evaluate danger
       if (!dangerPresent) {
         currentState = STATE_RESOLVED;
         Serial.println("STATE: RESOLVED (danger cleared during grace period)");
         resetAlerts();
-      } else if (millis() - graceStartTime > GRACE_PERIOD_MS || criticalDanger) {
+      } else if (millis() - graceStartTime > GRACE_PERIOD_MS) {
         currentState = STATE_CUTOFF;
         Serial.printf("STATE: CUTOFF - Reason: %s\n", dangerReason.c_str());
         executeCutoff();
